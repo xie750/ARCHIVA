@@ -179,21 +179,41 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     }
 
     private static ModelManifest manifest(String modelId, String version, String basePath) {
+        String resolvedBasePath = "kaifeng-iron-pagoda".equals(modelId)
+                ? "/models/kaifeng-iron-pagoda"
+                : basePath;
+        String resolvedVersion = "kaifeng-iron-pagoda".equals(modelId)
+                ? "0.9.0-reconstruction"
+                : version;
+        String resolvedStatus = "kaifeng-iron-pagoda".equals(modelId)
+                ? "TECHNICAL_REVIEW"
+                : "PUBLISHED";
+        long lowBytes = "kaifeng-iron-pagoda".equals(modelId) ? 139_448 : 8_200_000;
+        long mediumBytes = "kaifeng-iron-pagoda".equals(modelId) ? 339_632 : 24_600_000;
+        long highBytes = "kaifeng-iron-pagoda".equals(modelId) ? 1_913_708 : 68_000_000;
+        double[] cameraPosition = "kaifeng-iron-pagoda".equals(modelId)
+                ? new double[]{10, 7.5, 12.5}
+                : new double[]{20, 12, 24};
+        double[] cameraTarget = "kaifeng-iron-pagoda".equals(modelId)
+                ? new double[]{0, 3.6, 0}
+                : new double[]{0, 5, 0};
+        double cameraFov = "kaifeng-iron-pagoda".equals(modelId) ? 34 : 45;
+        String textureFormat = "kaifeng-iron-pagoda".equals(modelId) ? "embedded-materials" : "KTX2";
         return new ModelManifest(
                 modelId,
-                version,
-                "PUBLISHED",
+                resolvedVersion,
+                resolvedStatus,
                 List.of(
-                        new ModelManifest.LodAsset("low", basePath + "/model-low.glb", 8_200_000),
-                        new ModelManifest.LodAsset("medium", basePath + "/model-medium.glb", 24_600_000),
-                        new ModelManifest.LodAsset("high", basePath + "/model-high.glb", 68_000_000)
+                        new ModelManifest.LodAsset("low", resolvedBasePath + "/model-low.glb", lowBytes),
+                        new ModelManifest.LodAsset("medium", resolvedBasePath + "/model-medium.glb", mediumBytes),
+                        new ModelManifest.LodAsset("high", resolvedBasePath + "/model-high.glb", highBytes)
                 ),
                 new ModelManifest.TextureSet(
-                        "KTX2",
-                        basePath + "/textures/",
+                        textureFormat,
+                        resolvedBasePath + "/textures/",
                         Map.of("mobile", "1k", "desktop", "2k", "detail", "4k")
                 ),
-                new ModelManifest.CameraPreset(new double[]{20, 12, 24}, new double[]{0, 5, 0}, 45),
+                new ModelManifest.CameraPreset(cameraPosition, cameraTarget, cameraFov),
                 List.of(
                         new ModelManifest.ModelHotspot("overview", "建筑总览", new double[]{0, 4, 0}, "从整体尺度观察建筑与周边环境的关系。"),
                         new ModelManifest.ModelHotspot("structure", "结构节点", new double[]{2.4, 8.1, -1.2}, "这里可以替换为构件的出版级讲解内容。"),
@@ -203,7 +223,10 @@ public class InMemoryBuildingRepository implements BuildingRepository {
                         new ModelManifest.ModelComponent("main-body", "主体", "Building_Main", null),
                         new ModelManifest.ModelComponent("roof", "屋顶", "Roof_Main", "main-body"),
                         new ModelManifest.ModelComponent("opening", "门窗", "Openings", "main-body")
-                )
+                ),
+                "kaifeng-iron-pagoda".equals(modelId) ? "资料复原样板 · 待授权实测扫描" : null,
+                "kaifeng-iron-pagoda".equals(modelId) ? "项目自建资料复原（基于公开形制资料与比例参数，不代表现场测绘）" : null,
+                "kaifeng-iron-pagoda".equals(modelId) ? "项目自有技术样板；替换为授权实测资产后再用于正式出版" : null
         );
     }
 }

@@ -48,6 +48,15 @@ export const buildings: Building[] = [
     tags: ['禅宗祖庭', '嵩山', '木构', '武术文化'],
     highlights: ['山门与碑林', '大雄宝殿', '塔林地景'],
     sources: [{ label: '登封市文物局公开资料', href: 'https://www.dengfeng.gov.cn/', kind: '官方资料' }, { label: '项目建模记录 · 版本 1.0.1', kind: '项目记录' }],
+    scenic: {
+      title: '少林寺 · 山门至塔林数字现场',
+      subtitle: '先从寺院地图选择空间节点，再进入对应的单体 3D 体验。',
+      points: [
+        { id: 'shaolin-main-hall', name: '常住院', subtitle: '寺院中轴核心', description: '沿山门、大雄宝殿和藏经阁展开的寺院主轴，适合观察院落与礼仪动线。', position: [42, 42], coordinates: [112.9369, 34.5088], modelKind: 'temple', status: '重点展项' },
+        { id: 'shaolin-pagoda-forest', name: '塔林', subtitle: '历代高僧墓塔群', description: '少林寺西侧的墓塔群，适合从群体尺度阅读塔制、年代和山地关系。', position: [69, 57], coordinates: [112.9406, 34.5088], modelKind: 'pagoda', status: '历史路径' },
+        { id: 'shaolin-chuzu', name: '初祖庵', subtitle: '达摩面壁传说空间', description: '少室山北麓的历史节点，将寺院建筑与山林路径放在同一张地图上阅读。', position: [24, 70], coordinates: [112.9258, 34.5251], modelKind: 'garden', status: '观景节点' },
+      ],
+    },
     status: '已收录',
     model: { kind: 'temple', version: '1.0.1', precision: '激光扫描 · 1cm', nodes: 164 },
   },
@@ -68,8 +77,23 @@ export const buildings: Building[] = [
     tags: ['北宋', '琉璃砖', '楼阁式', '古都开封'],
     highlights: ['褐色琉璃砖', '仿木构斗拱', '塔身铭文'],
     sources: [{ label: '开封市文物考古研究院资料', kind: '研究资料' }, { label: '项目测绘记录 · 版本 0.8.4', kind: '项目记录' }],
+    scenic: {
+      title: '开封铁塔 · 单体建筑数字现场',
+      subtitle: '地图保留建筑所在的真实地理关系；选择唯一主节点后进入铁塔 3D 详情。',
+      points: [
+        { id: 'iron-pagoda-main', name: '铁塔本体', subtitle: '北宋楼阁式砖塔', description: '地图中的唯一主节点，对应开封铁塔本体；进入后可查看塔身、檐口与琉璃砖细部。', position: [52, 47], coordinates: [114.3632, 34.8198], modelKind: 'pagoda', status: '重点展项', useParentModel: true },
+      ],
+    },
     status: '已收录',
-    model: { kind: 'pagoda', version: '0.8.4', precision: '摄影测量 · 3cm', nodes: 96 },
+    model: {
+      kind: 'pagoda',
+      version: '0.9.0-reconstruction',
+      precision: '资料复原 GLB · LOD low/medium/high',
+      nodes: 13,
+      manifestUrl: '/models/kaifeng-iron-pagoda/manifest.json',
+      source: '项目自建资料复原样板；非现场实测，待接入授权扫描资产',
+      license: '项目自有技术样板；正式出版需替换为已授权实测资产',
+    },
   },
   {
     id: 'yingtian-gate',
@@ -88,6 +112,13 @@ export const buildings: Building[] = [
     tags: ['隋唐洛阳城', '都城礼制', '门阙', '遗址展示'],
     highlights: ['五阙连城', '丹墀御道', '宫城中轴线'],
     sources: [{ label: '洛阳市文物局公开资料', href: 'https://wwj.ly.gov.cn/', kind: '官方资料' }, { label: '考古复原说明 · 研究版', kind: '研究资料' }],
+    scenic: {
+      title: '应天门遗址 · 都城轴线数字现场',
+      subtitle: '地图保留遗址与洛阳城中轴线的关系，主节点进入门阙复原 3D。',
+      points: [
+        { id: 'yingtian-main', name: '应天门遗址', subtitle: '隋唐洛阳城正南门', description: '唯一主节点对应应天门遗址本体，进入后查看一门三道、五阙相连的形制复原。', position: [50, 50], coordinates: [112.4463, 34.6713], modelKind: 'gate', status: '重点展项' },
+      ],
+    },
     status: '持续研究',
     model: { kind: 'gate', version: '0.7.6', precision: '考古复原 · 研究版', nodes: 132 },
   },
@@ -108,6 +139,15 @@ export const buildings: Building[] = [
     tags: ['宋代城市', '园林复原', '汴河', '图像叙事'],
     highlights: ['虹桥水院', '上善门', '宋都街市'],
     sources: [{ label: '开封市文化广电和旅游局公开资料', kind: '官方资料' }, { label: '场景复原记录 · 版本 0.6.3', kind: '项目记录' }],
+    scenic: {
+      title: '清明上河园 · 汴河城市数字现场',
+      subtitle: '先从园区地图选择一个节点，再进入对应建筑或场景的单体 3D。',
+      points: [
+        { id: 'qingming-gate', name: '上善门', subtitle: '园区主入口 · 城门节点', description: '从上善门进入宋代城市叙事，观察城门、街市和游览主轴的关系。', position: [23, 48], coordinates: [114.3498, 34.8078], modelKind: 'gate', status: '重点展项' },
+        { id: 'qingming-rainbow-bridge', name: '虹桥水院', subtitle: '汴河与桥市空间', description: '以汴河、虹桥和临水建筑组织游览路径，是园区中最具识别度的空间节点。', position: [52, 38], coordinates: [114.3510, 34.8072], modelKind: 'garden', status: '重点展项' },
+        { id: 'qingming-song-street', name: '宋都街市', subtitle: '市井生活场景', description: '沿街屋舍、商铺和人物活动共同构成《清明上河图》的城市生活场景。', position: [74, 63], coordinates: [114.3490, 34.8090], modelKind: 'temple', status: '历史路径' },
+      ],
+    },
     status: '已收录',
     model: { kind: 'garden', version: '0.6.3', precision: '场景复原 · 10cm', nodes: 284 },
   },

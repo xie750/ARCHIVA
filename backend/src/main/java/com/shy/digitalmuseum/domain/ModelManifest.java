@@ -11,12 +11,29 @@ public record ModelManifest(
         TextureSet textures,
         CameraPreset defaultCamera,
         List<ModelHotspot> hotspots,
-        List<ModelComponent> components
+        List<ModelComponent> components,
+        String assetStatus,
+        String source,
+        String license
 ) {
     public ModelManifest {
         lod = lod == null ? List.of() : List.copyOf(lod);
         hotspots = hotspots == null ? List.of() : List.copyOf(hotspots);
         components = components == null ? List.of() : List.copyOf(components);
+    }
+
+    /** Backward-compatible constructor for older seed records and clients. */
+    public ModelManifest(
+            String modelId,
+            String version,
+            String versionStatus,
+            List<LodAsset> lod,
+            TextureSet textures,
+            CameraPreset defaultCamera,
+            List<ModelHotspot> hotspots,
+            List<ModelComponent> components
+    ) {
+        this(modelId, version, versionStatus, lod, textures, defaultCamera, hotspots, components, null, null, null);
     }
 
     public record LodAsset(String level, String url, long bytes) {

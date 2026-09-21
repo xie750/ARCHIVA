@@ -1,6 +1,12 @@
 spring:
   application:
     name: henan-architecture-museum-api
+  datasource:
+    url: jdbc:sqlite:./data/digital-museum.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 1
   jackson:
     default-property-inclusion: non_null
     serialization:

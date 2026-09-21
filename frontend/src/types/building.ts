@@ -22,6 +22,11 @@ export interface ScenicPoint {
   /** Official platform embed; the page must retain its author/attribution. */
   embedUrl?: string
   embedSource?: string
+  /** Optional point-level asset overrides for multi-building scenic sites. */
+  manifestUrl?: string
+  assetUrl?: string
+  /** Reuse the parent building model when this is a single-location overview point. */
+  useParentModel?: boolean
   modelKind: Building['model']['kind']
   status: '重点展项' | '观景节点' | '历史路径'
 }

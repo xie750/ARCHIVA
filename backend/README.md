@@ -1,12 +1,13 @@
 # 河南建筑数字志 API
 
-这是“河南建筑数字志”出版 Demo 的 Spring Boot 模块化单体后端。首版使用内存示例数据，接口和领域模型已经按后续接入 PostgreSQL/PostGIS、Redis 和对象存储的方式拆分，启动时不需要数据库或 MinIO。
+这是“河南建筑数字志”出版 Demo 的 Spring Boot 模块化单体后端。当前使用本地 SQLite 保存建筑、景区和 POI 示例数据，接口和领域模型已经按后续接入 PostgreSQL/PostGIS、Redis 和对象存储的方式拆分。
 
 ## 技术栈
 
 - Java 17+
 - Spring Boot 3.4
 - Spring MVC + Bean Validation
+- SQLite + Spring JDBC（本地开发持久化）
 - Maven
 
 ## 目录结构
@@ -36,6 +37,8 @@ mvn spring-boot:run
 ```
 
 默认服务地址：`http://localhost:8080`
+
+首次启动会在 `backend/data/digital-museum.db` 创建数据库并写入内置示例数据。SQLite 只保存结构化聚合 JSON；GLB、全景、图片、音频和视频仍通过 manifest URL 指向对象存储或 CDN。
 
 ## REST 接口
 

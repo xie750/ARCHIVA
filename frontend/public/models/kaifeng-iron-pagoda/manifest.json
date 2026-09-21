@@ -1,0 +1,34 @@
+{
+  "modelId": "kaifeng-iron-pagoda",
+  "version": "0.9.0-reconstruction",
+  "versionStatus": "TECHNICAL_REVIEW",
+  "assetStatus": "资料复原样板 · 待授权实测扫描",
+  "source": "项目自建资料复原（基于公开形制资料与比例参数，不代表现场测绘）",
+  "license": "项目自有技术样板；替换为授权实测资产后再用于正式出版",
+  "lod": [
+    { "level": "low", "url": "/models/kaifeng-iron-pagoda/model-low.glb", "bytes": 139448 },
+    { "level": "medium", "url": "/models/kaifeng-iron-pagoda/model-medium.glb", "bytes": 339632 },
+    { "level": "high", "url": "/models/kaifeng-iron-pagoda/model-high.glb", "bytes": 1913708 }
+  ],
+  "textures": {
+    "format": "embedded-materials",
+    "basePath": "/models/kaifeng-iron-pagoda/",
+    "variants": { "mobile": "low", "desktop": "medium", "detail": "high" }
+  },
+  "defaultCamera": {
+    "position": [10, 7.5, 12.5],
+    "target": [0, 3.6, 0],
+    "fov": 34
+  },
+  "hotspots": [
+    { "id": "overview", "title": "主体形制", "position": [0, 4.2, 0], "content": "十三层楼阁式塔身、逐层收分与褐色琉璃砖的整体比例。" },
+    { "id": "structure", "title": "仿木构节点", "position": [1.25, 7.2, -1.15], "content": "檐口、角柱与砖雕细部是楼阁式形制的重点阅读位置。" },
+    { "id": "material", "title": "琉璃砖材质", "position": [-1.1, 3.2, 1.2], "content": "铁塔以褐色琉璃砖呈现铁色效果，模型中保留材质明暗和构件层次。" }
+  ],
+  "components": [
+    { "id": "body", "name": "十三层塔身", "nodeName": "Building_Main", "parentId": null },
+    { "id": "floor-01", "name": "第一层", "nodeName": "Floor_01", "parentId": "body" },
+    { "id": "eaves", "name": "檐口与斗拱表达", "nodeName": "Eave_Band", "parentId": "body" },
+    { "id": "finial", "name": "塔刹", "nodeName": "Finial_Shaft", "parentId": "body" }
+  ]
+}

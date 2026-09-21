@@ -7,6 +7,7 @@ import type { ScenicPoint } from '../../types/building'
 
 const props = defineProps<{ title: string; subtitle: string; points: ScenicPoint[] }>()
 const emit = defineEmits<{ select: [point: ScenicPoint] }>()
+const isSinglePoint = computed(() => props.points.length === 1)
 const selectedId = ref(props.points[0]?.id ?? '')
 const selected = computed(() => props.points.find((point) => point.id === selectedId.value) ?? props.points[0])
 const mapElement = ref<HTMLElement | null>(null)
@@ -110,7 +111,7 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 
 <template>
   <section class="scenic-overview">
-    <div class="scenic-overview-head"><div><span class="eyebrow scenic-eyebrow">LIVE MAP / HERITAGE SITE</span><h2>{{ title }}</h2><p>{{ subtitle }}</p></div><div class="scenic-mode"><span class="mode-dot" /> 真实地理底图 <span class="mode-separator">·</span> {{ points.length }} 个节点已载入</div></div>
+    <div class="scenic-overview-head"><div><span class="eyebrow scenic-eyebrow">LIVE MAP / {{ isSinglePoint ? 'BUILDING LOCATION' : 'HERITAGE SITE' }}</span><h2>{{ title }}</h2><p>{{ subtitle }}</p></div><div class="scenic-mode"><span class="mode-dot" /> 真实地理底图 <span class="mode-separator">·</span> {{ isSinglePoint ? '单体位置已载入' : points.length + ' 个节点已载入' }}</div></div>
     <div class="scenic-stage">
       <div ref="mapElement" class="map-canvas" aria-label="景区真实地理地图" />
       <div class="map-vignette" /><div class="map-scanline" />
@@ -119,8 +120,8 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
       <div v-if="mapError" class="map-error"><MapIcon :size="14" /> 底图加载较慢，请检查网络后重试。</div>
       <div class="stage-meta"><span><MapIcon :size="13" /> {{ title }}</span><span>{{ coordinateLabel }}</span></div>
     </div>
-    <div class="scenic-detail"><div class="scenic-detail-index">0{{ points.findIndex((item) => item.id === selectedId) + 1 }}</div><div class="scenic-detail-copy"><div class="scenic-detail-kicker">{{ selected?.status }} · {{ selected?.subtitle }}</div><h3>{{ selected?.name }}</h3><p>{{ selected?.description }}</p></div><button type="button" class="scenic-enter" :disabled="!selected" @click="selected && emit('select', selected)">进入空间 <ArrowRight :size="15" /></button></div>
-    <div class="scenic-legend"><span><i class="legend-ring" /> 可进入的 3D 展项</span><span><i class="legend-line" /> 真实道路与河流</span><span><LocateFixed :size="12" /> 点击地图点位查看历史介绍</span><span class="map-attribution-note">地图 © OpenStreetMap contributors</span></div>
+    <div class="scenic-detail"><div class="scenic-detail-index">0{{ points.findIndex((item) => item.id === selectedId) + 1 }}</div><div class="scenic-detail-copy"><div class="scenic-detail-kicker">{{ selected?.status }} · {{ selected?.subtitle }}</div><h3>{{ selected?.name }}</h3><p>{{ selected?.description }}</p></div><button type="button" class="scenic-enter" :disabled="!selected" @click="selected && emit('select', selected)">{{ isSinglePoint ? '进入 3D' : '进入空间' }} <ArrowRight :size="15" /></button></div>
+    <div class="scenic-legend"><span><i class="legend-ring" /> 可进入的 3D 展项</span><span><i class="legend-line" /> 真实道路与河流</span><span><LocateFixed :size="12" /> {{ isSinglePoint ? '点击地图点位进入单体展示' : '点击地图点位查看历史介绍' }}</span><span class="map-attribution-note">地图 © OpenStreetMap contributors</span></div>
   </section>
 </template>
 
