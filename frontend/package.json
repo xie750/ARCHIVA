@@ -1,0 +1,28 @@
+{
+  "name": "henan-architecture-atlas-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-vue-next": "^0.468.0",
+    "pinia": "^2.3.0",
+    "three": "^0.171.0",
+    "vite": "^6.0.5",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.7.2",
+    "vue-tsc": "^2.2.0"
+  }
+}
