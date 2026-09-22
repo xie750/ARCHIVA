@@ -3,6 +3,7 @@ import type { Building } from '../types/building'
 export const buildings: Building[] = [
   {
     id: 'longmen-grottoes',
+    region: '河南',
     name: '龙门石窟',
     pinyin: 'Lóngmén Shíkū',
     category: '石窟',
@@ -23,9 +24,9 @@ export const buildings: Building[] = [
       subtitle: '先从景区总览进入，再选择一个可以被深入阅读的空间节点。',
       points: [
         { id: 'fengxian', name: '奉先寺', subtitle: '唐代皇家石窟', description: '卢舍那大佛所在的核心洞窟，崖壁、造像与伊河共同构成龙门的主视觉。', position: [58, 38], coordinates: [112.4694, 34.5578], modelKind: 'grotto', status: '重点展项', embedUrl: 'https://sketchfab.com/models/d3b496a05fae46b5a5fdb19bb2708c4c/embed?autostart=1&ui_theme=dark&dnt=1', embedSource: 'Digital Heritage Archive / Sketchfab · 原平台公开展示' },
-        { id: 'binyang', name: '宾阳三洞', subtitle: '北魏至唐 · 三座洞窟', description: '北魏皇家开凿的连续洞窟，适合观察造像组合与空间尺度的演变。', position: [35, 53], coordinates: [112.4690, 34.5555], modelKind: 'temple', status: '历史路径' },
+        { id: 'binyang', name: '宾阳三洞', subtitle: '北魏至唐 · 三座洞窟', description: '北魏皇家开凿的连续洞窟，适合观察造像组合与空间尺度的演变。', position: [35, 53], coordinates: [112.4690, 34.5555], modelKind: 'grotto', status: '历史路径' },
         { id: 'xiangshan', name: '香山寺', subtitle: '山水观景节点', description: '从香山俯瞰伊阙，理解石窟群与山水地理之间的关系。', position: [76, 66], coordinates: [112.473914, 34.555827], modelKind: 'garden', status: '观景节点' },
-        { id: 'guyang', name: '古阳洞', subtitle: '题记与书法档案', description: '北魏书法题记的集中区域，将建筑空间与文字史料放在同一条游览路径中。', position: [25, 30], coordinates: [112.4678, 34.5594], modelKind: 'gate', status: '历史路径' },
+        { id: 'guyang', name: '古阳洞', subtitle: '题记与书法档案', description: '北魏书法题记的集中区域，将建筑空间与文字史料放在同一条游览路径中。', position: [25, 30], coordinates: [112.4678, 34.5594], modelKind: 'grotto', status: '历史路径' },
       ],
     },
     status: '已收录',
@@ -33,6 +34,7 @@ export const buildings: Building[] = [
   },
   {
     id: 'shaolin-temple',
+    region: '河南',
     name: '嵩山少林寺',
     pinyin: 'Sōngshān Shàolín Temple',
     category: '寺观',
@@ -54,7 +56,7 @@ export const buildings: Building[] = [
       points: [
         { id: 'shaolin-main-hall', name: '常住院', subtitle: '寺院中轴核心', description: '沿山门、大雄宝殿和藏经阁展开的寺院主轴，适合观察院落与礼仪动线。', position: [42, 42], coordinates: [112.9369, 34.5088], modelKind: 'temple', status: '重点展项' },
         { id: 'shaolin-pagoda-forest', name: '塔林', subtitle: '历代高僧墓塔群', description: '少林寺西侧的墓塔群，适合从群体尺度阅读塔制、年代和山地关系。', position: [69, 57], coordinates: [112.9406, 34.5088], modelKind: 'pagoda', status: '历史路径' },
-        { id: 'shaolin-chuzu', name: '初祖庵', subtitle: '达摩面壁传说空间', description: '少室山北麓的历史节点，将寺院建筑与山林路径放在同一张地图上阅读。', position: [24, 70], coordinates: [112.9258, 34.5251], modelKind: 'garden', status: '观景节点' },
+        { id: 'shaolin-chuzu', name: '初祖庵', subtitle: '达摩面壁传说空间', description: '少室山北麓的历史节点，将寺院建筑与山林路径放在同一张地图上阅读。', position: [24, 70], coordinates: [112.9258, 34.5251], modelKind: 'temple', status: '观景节点' },
       ],
     },
     status: '已收录',
@@ -62,6 +64,7 @@ export const buildings: Building[] = [
   },
   {
     id: 'kaifeng-iron-pagoda',
+    region: '河南',
     name: '开封铁塔',
     pinyin: 'Tiě Tǎ of Kaifeng',
     category: '古塔',
@@ -97,6 +100,7 @@ export const buildings: Building[] = [
   },
   {
     id: 'yingtian-gate',
+    region: '河南',
     name: '应天门遗址',
     pinyin: 'Yìngtiān Gate Site',
     category: '城门',
@@ -124,6 +128,7 @@ export const buildings: Building[] = [
   },
   {
     id: 'qingming-riverside-garden',
+    region: '河南',
     name: '清明上河园',
     pinyin: 'Qīngmíng Riverside Garden',
     category: '园林',
@@ -145,7 +150,7 @@ export const buildings: Building[] = [
       points: [
         { id: 'qingming-gate', name: '上善门', subtitle: '园区主入口 · 城门节点', description: '从上善门进入宋代城市叙事，观察城门、街市和游览主轴的关系。', position: [23, 48], coordinates: [114.3498, 34.8078], modelKind: 'gate', status: '重点展项' },
         { id: 'qingming-rainbow-bridge', name: '虹桥水院', subtitle: '汴河与桥市空间', description: '以汴河、虹桥和临水建筑组织游览路径，是园区中最具识别度的空间节点。', position: [52, 38], coordinates: [114.3510, 34.8072], modelKind: 'garden', status: '重点展项' },
-        { id: 'qingming-song-street', name: '宋都街市', subtitle: '市井生活场景', description: '沿街屋舍、商铺和人物活动共同构成《清明上河图》的城市生活场景。', position: [74, 63], coordinates: [114.3490, 34.8090], modelKind: 'temple', status: '历史路径' },
+        { id: 'qingming-song-street', name: '宋都街市', subtitle: '市井生活场景', description: '沿街屋舍、商铺和人物活动共同构成《清明上河图》的城市生活场景。', position: [74, 63], coordinates: [114.3490, 34.8090], modelKind: 'street', status: '历史路径' },
       ],
     },
     status: '已收录',

@@ -7,7 +7,7 @@ import { applyProceduralHeritageMaterials, disposeProceduralMaterialCache } from
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 const props = withDefaults(defineProps<{
-  kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden'
+  kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden' | 'street'
   /** A reviewed GLB URL. The procedural scene remains the explicit fallback. */
   assetUrl?: string
   /** Endpoint returning a ModelManifest with a lod[] array. */
@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   /** Official third-party viewer embed. Used when the source does not allow GLB redistribution. */
   embedUrl?: string
 }>(), { assetUrl: undefined, manifestUrl: undefined })
+const isPagodaShowcase = computed(() => props.kind === 'pagoda' && Boolean(props.manifestUrl || props.assetUrl))
 const mount = ref<HTMLDivElement | null>(null)
 const autoRotate = ref(true)
 const wireframe = ref(false)
@@ -35,7 +36,7 @@ const assetBadge = computed(() => {
   if (loadedRealAsset.value) return assetManifest.value?.versionStatus === 'PUBLISHED' ? 'REVIEWED GLB' : 'RECONSTRUCTION GLB'
   return hasReviewedAsset.value ? 'GLB READY' : 'CONCEPT MODEL'
 })
-const modelLabel = computed(() => ({ grotto: '石窟群 · 空间扫描', temple: '寺院轴线 · 空间扫描', gate: '城门遗址 · 形制复原', pagoda: '楼阁古塔 · 构件扫描', garden: '宋式园林 · 场景复原' }[props.kind]))
+const modelLabel = computed(() => ({ grotto: '石窟群 · 空间扫描', temple: '寺院轴线 · 空间扫描', gate: '城门遗址 · 形制复原', pagoda: '楼阁古塔 · 构件扫描', garden: '宋式园林 · 场景复原', street: '宋代街市 · 场景复原' }[props.kind]))
 type CameraPreset = 'overview' | 'detail' | 'axis' | 'top'
 type Hotspot = { id: string; label: string; description: string; placement: string; preset: CameraPreset }
 const hotspots = computed<Hotspot[]>(() => [
@@ -50,6 +51,16 @@ let frame = 0
 let cleanup = () => undefined
 let loadedModel: THREE.Object3D | undefined
 let requestController: AbortController | undefined
+let animationRunning = false
+let viewerVisible = true
+let lastRenderAt = 0
+let visibilityObserver: IntersectionObserver | undefined
+let documentVisibilityHandler: (() => void) | undefined
+let sceneForAnimation: THREE.Scene | undefined
+let groupForAnimation: THREE.Group | undefined
+let particlesForAnimation: THREE.Points | undefined
+let scanBeamForAnimation: THREE.Mesh | undefined
+let lowPowerDevice = false
 let initialCamera = new THREE.Vector3(9, 6.5, 11)
 let initialTarget = new THREE.Vector3(0, 2, 0)
 const trackedMaterials: THREE.Material[] = []
@@ -66,31 +77,86 @@ let modelDefaultFrame: { position: THREE.Vector3; target: THREE.Vector3 } | unde
 function registerMaterial(material: THREE.Material) { if (!trackedMaterials.includes(material)) trackedMaterials.push(material); return material }
 function setMeshProps(mesh: THREE.Mesh) { mesh.castShadow = true; mesh.receiveShadow = true; if (Array.isArray(mesh.material)) mesh.material.forEach(registerMaterial); else registerMaterial(mesh.material); return mesh }
 function addBox(group: THREE.Group, size: [number, number, number], position: [number, number, number], material: THREE.Material) { const mesh = setMeshProps(new THREE.Mesh(new THREE.BoxGeometry(...size), material)); mesh.position.set(...position); group.add(mesh); return mesh }
-function addRoof(group: THREE.Group, radius: number, height: number, y: number, material: THREE.Material, rotation = Math.PI / 4) { const mesh = setMeshProps(new THREE.Mesh(new THREE.ConeGeometry(radius, height, 4), material)); mesh.rotation.y = rotation; mesh.position.y = y; group.add(mesh); return mesh }
+function addRoof(group: THREE.Group, radius: number, height: number, y: number, material: THREE.Material, rotation = Math.PI / 4, x = 0, z = 0) { const mesh = setMeshProps(new THREE.Mesh(new THREE.ConeGeometry(radius, height, 4), material)); mesh.rotation.y = rotation; mesh.position.set(x, y, z); group.add(mesh); return mesh }
 function addLine(group: THREE.Group, points: THREE.Vector3[], color: number, opacity = 0.45) { const geometry = new THREE.BufferGeometry().setFromPoints(points); const material = registerMaterial(new THREE.LineBasicMaterial({ color, transparent: true, opacity })) as THREE.LineBasicMaterial; const line = new THREE.Line(geometry, material); group.add(line); return line }
 function addTechRing(group: THREE.Group, radius: number, y: number, color: number, speed: number) { const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.56, side: THREE.DoubleSide }); registerMaterial(material); const ring = new THREE.Mesh(new THREE.RingGeometry(radius - 0.015, radius, 96), material); ring.rotation.x = -Math.PI / 2; ring.position.y = y; group.add(ring); animatedRings.push({ mesh: ring, speed, baseY: y }); return ring }
 function addFinials(group: THREE.Group, width: number, y: number, material: THREE.Material) { for (const x of [-width / 2, width / 2]) for (const z of [-width / 2, width / 2]) { const finial = setMeshProps(new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 6), material)); finial.position.set(x, y, z); group.add(finial) } }
+function addColumn(group: THREE.Group, x: number, y: number, z: number, height: number, material: THREE.Material, radius = 0.12) {
+  const column = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 1.08, height, 10), material))
+  column.position.set(x, y + height / 2, z)
+  group.add(column)
+  return column
+}
+function addWindow(group: THREE.Group, x: number, y: number, z: number, width: number, height: number, material: THREE.Material) {
+  const window = addBox(group, [width, height, 0.08], [x, y, z], material)
+  addBox(group, [0.055, height + 0.08, 0.1], [x, y, z - 0.06], material)
+  addBox(group, [width + 0.08, 0.055, 0.1], [x, y, z - 0.06], material)
+  return window
+}
 
-function buildScene(kind: typeof props.kind) {
+type ViewerQuality = { pixelRatio: number; shadows: boolean; particleCount: number }
+
+function viewerQuality(): ViewerQuality {
+  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean; effectiveType?: string } }
+  const memory = nav.deviceMemory ?? 4
+  const constrained = Boolean(nav.connection?.saveData || /(^|-)2g$/.test(nav.connection?.effectiveType ?? ''))
+  const cpuConstrained = (navigator.hardwareConcurrency ?? 4) <= 2
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const mobile = window.matchMedia('(max-width: 700px)').matches
+  const lowPower = memory <= 2 || constrained || cpuConstrained || reducedMotion
+  return {
+    pixelRatio: lowPower ? 1 : Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.5),
+    shadows: !lowPower,
+    particleCount: lowPower ? 70 : mobile ? 110 : 170,
+  }
+}
+
+function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
   animatedRings.length = 0
   trackedMaterials.length = 0
   scanMaterial = undefined
   const scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2('#07121b', 0.026)
+  const pagodaShowcase = kind === 'pagoda'
+  const gateShowcase = kind === 'gate'
+  const grottoShowcase = kind === 'grotto'
+  const gardenShowcase = kind === 'garden'
+  const streetShowcase = kind === 'street'
+  const stage = pagodaShowcase
+    ? { top: '#f3e6d1', bottom: '#161311', ground: '#292622', background: '#1a2527' }
+    : gateShowcase
+      ? { top: '#f0d7b4', bottom: '#281b1a', ground: '#30231f', background: '#24191a' }
+      : grottoShowcase
+        ? { top: '#d9d3c7', bottom: '#182027', ground: '#26262a', background: '#182128' }
+        : gardenShowcase || streetShowcase
+          ? { top: '#dce8d6', bottom: '#14211c', ground: '#20362d', background: '#172520' }
+          : { top: '#d9e8ed', bottom: '#05090d', ground: '#0b171d', background: '#07121b' }
+  scene.background = new THREE.Color(stage.background)
+  scene.fog = new THREE.FogExp2(stage.background, gateShowcase || pagodaShowcase ? 0.018 : 0.026)
   const cameraInstance = new THREE.PerspectiveCamera(34, 1, 0.1, 120)
-  cameraInstance.position.set(9, 6.6, 11); camera = cameraInstance; initialCamera = cameraInstance.position.clone()
-  scene.add(new THREE.HemisphereLight('#d9e8ed', '#05090d', 1.55))
-  const key = new THREE.DirectionalLight('#ffe2b6', 4.8); key.position.set(8, 14, 7); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.camera.near = 1; key.shadow.camera.far = 55; key.shadow.camera.left = -20; key.shadow.camera.right = 20; key.shadow.camera.top = 20; key.shadow.camera.bottom = -20; scene.add(key)
-  const rim = new THREE.SpotLight('#66c9d5', 15, 38, Math.PI / 7, 0.7, 1.4); rim.position.set(-10, 9, -11); rim.target.position.set(0, 2, 0); scene.add(rim, rim.target)
-  const warmFill = new THREE.PointLight('#db744b', 2.6, 20); warmFill.position.set(3, 2.2, 4); scene.add(warmFill)
+  const cameraStart: Record<typeof props.kind, [number, number, number]> = {
+    grotto: [9.6, 5.5, 12.5], temple: [9.2, 5.9, 12.8], gate: [11, 7, 13], pagoda: [10, 7.5, 12.5], garden: [9.2, 6, 12.8], street: [10.5, 6.2, 13.6],
+  }
+  const targetStart: Record<typeof props.kind, [number, number, number]> = {
+    grotto: [0, 2.25, 0], temple: [0, 1.8, 0], gate: [0, 2.5, 0], pagoda: [0, 3.6, 0], garden: [0, 1.6, 0], street: [0, 1.5, 0],
+  }
+  cameraInstance.position.set(...cameraStart[kind]); camera = cameraInstance; initialCamera = cameraInstance.position.clone(); initialTarget = new THREE.Vector3(...targetStart[kind])
+  scene.add(new THREE.HemisphereLight(stage.top, stage.bottom, pagodaShowcase || gateShowcase ? 1.9 : 1.65))
+  // The pagoda is the hero asset. Use a warm key and a restrained cool rim so
+  // the glazed-brick colors read like a physical object instead of a neon HUD.
+  const keyColor = gateShowcase ? '#ffd09a' : pagodaShowcase ? '#ffd7a0' : grottoShowcase ? '#e7c7aa' : gardenShowcase ? '#ffe8bf' : streetShowcase ? '#ffd7a0' : '#ffe2b6'
+  const key = new THREE.DirectionalLight(keyColor, pagodaShowcase ? 6.4 : gateShowcase ? 6 : grottoShowcase ? 5.2 : 4.8); key.position.set(8, 14, 7); key.castShadow = quality.shadows; key.shadow.mapSize.set(quality.shadows ? 768 : 256, quality.shadows ? 768 : 256); key.shadow.camera.near = 1; key.shadow.camera.far = 55; key.shadow.camera.left = -20; key.shadow.camera.right = 20; key.shadow.camera.top = 20; key.shadow.camera.bottom = -20; scene.add(key)
+  const rimColor = gateShowcase ? '#e5a988' : pagodaShowcase ? '#9bc4c2' : grottoShowcase ? '#8dc9ce' : gardenShowcase ? '#90d3b2' : streetShowcase ? '#d7a66f' : '#66c9d5'
+  const rim = new THREE.SpotLight(rimColor, pagodaShowcase || gateShowcase ? 8 : grottoShowcase ? 10 : 12, 38, Math.PI / 7, 0.7, 1.4); rim.position.set(-10, 9, -11); rim.target.position.set(0, 2, 0); scene.add(rim, rim.target)
+  const fillColor = gateShowcase ? '#d87950' : pagodaShowcase ? '#e9a66d' : grottoShowcase ? '#b76f4e' : gardenShowcase ? '#d59b58' : streetShowcase ? '#d87950' : '#db744b'
+  const warmFill = new THREE.PointLight(fillColor, pagodaShowcase || gateShowcase ? 3.8 : 2.6, 20); warmFill.position.set(3, 2.2, 4); scene.add(warmFill)
   const environment = new THREE.Group()
-  const groundMaterial = registerMaterial(new THREE.MeshStandardMaterial({ color: '#0b171d', roughness: 0.88, metalness: 0.18 }))
+  const groundMaterial = registerMaterial(new THREE.MeshStandardMaterial({ color: stage.ground, roughness: 0.88, metalness: 0.12 }))
   const ground = setMeshProps(new THREE.Mesh(new THREE.CircleGeometry(18, 96), groundMaterial)); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; environment.add(ground)
   const grid = new THREE.GridHelper(34, 34, 0x32717b, 0x17343d); const gridMaterials = Array.isArray(grid.material) ? grid.material : [grid.material]; gridMaterials.forEach((material) => { material.transparent = true; material.opacity = 0.24; registerMaterial(material) }); grid.position.y = 0.015; environment.add(grid)
   addTechRing(environment, 4.6, 0.035, 0x4bc3cc, 0.15); addTechRing(environment, 6.3, 0.04, 0xbf8751, -0.1); addTechRing(environment, 8.4, 0.045, 0x2b6973, 0.06)
   for (let i = 0; i < 16; i += 1) { const a = (i / 16) * Math.PI * 2; const radius = i % 2 ? 8.4 : 6.3; const point = new THREE.Vector3(Math.cos(a) * radius, 0.05, Math.sin(a) * radius); addLine(environment, [point.clone().multiplyScalar(0.78), point], i % 2 ? 0x3faeb8 : 0xa77b4d, 0.5) }
   scene.add(environment)
-  const particleCount = 170; const particlePositions = new Float32Array(particleCount * 3)
+  const particleCount = quality.particleCount; const particlePositions = new Float32Array(particleCount * 3)
   for (let i = 0; i < particleCount; i += 1) { const angle = Math.random() * Math.PI * 2; const radius = 5 + Math.random() * 13; particlePositions[i * 3] = Math.cos(angle) * radius; particlePositions[i * 3 + 1] = 0.3 + Math.random() * 10; particlePositions[i * 3 + 2] = Math.sin(angle) * radius }
   const particleGeometry = new THREE.BufferGeometry(); particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3)); const particles = new THREE.Points(particleGeometry, new THREE.PointsMaterial({ color: 0x78c7cc, size: 0.045, transparent: true, opacity: 0.52, depthWrite: false })); scene.add(particles)
   const group = new THREE.Group()
@@ -99,17 +165,155 @@ function buildScene(kind: typeof props.kind) {
     for (let i = 0; i < 9; i += 1) { const width = 3.65 - i * 0.24; const baseY = 0.32 + i * 0.78; addBox(group, [width, 0.54, width], [0, baseY, 0], i % 2 ? stone : dark); addBox(group, [width + 0.38, 0.1, width + 0.38], [0, baseY + 0.3, 0], gold); addRoof(group, width * 0.76, 0.58, baseY + 0.64, i % 2 ? gold : dark); addFinials(group, width + 0.22, baseY + 0.43, gold); for (const x of [-width * 0.42, width * 0.42]) for (const z of [-width * 0.42, width * 0.42]) addBox(group, [0.14, 0.38, 0.14], [x, baseY + 0.16, z], stoneLight) }
     addBox(group, [0.72, 7.7, 0.72], [0, 3.5, 0], stoneLight); addBox(group, [0.15, 7.2, 0.15], [0, 3.65, 0], cyan)
   } else if (kind === 'gate') {
-    addBox(group, [9.3, 0.45, 2.8], [0, 0.22, 0], dark)
-    for (const x of [-3.4, 0, 3.4]) { addBox(group, [1.28, 4.85, 1.3], [x, 2.65, 0], red); addBox(group, [1.52, 0.26, 1.54], [x, 5.02, 0], gold); addRoof(group, 1.92, 0.78, 5.45, gold); addFinials(group, 1.65, 5.18, gold) }
-    addBox(group, [8.6, 1.05, 2.15], [0, 4.55, 0], red); addRoof(group, 5.2, 1.05, 5.45, dark); for (const x of [-2.1, 2.1]) addBox(group, [0.17, 3.4, 0.18], [x, 2.2, -1.14], gold); addBox(group, [2.0, 3.15, 0.3], [0, 1.65, -1.18], dark)
+    // Yingtiamen / gate profile: three readable passageways, a deep red
+    // gatehouse, layered eaves and framed openings. This gives the fallback
+    // the same architectural specificity as the pagoda showcase.
+    const wall = registerMaterial(new THREE.MeshStandardMaterial({ color: '#8d302b', roughness: 0.72, metalness: 0.05 }))
+    const wallLight = registerMaterial(new THREE.MeshStandardMaterial({ color: '#b04a38', roughness: 0.64, metalness: 0.05 }))
+    const roofDark = registerMaterial(new THREE.MeshStandardMaterial({ color: '#292225', roughness: 0.78, metalness: 0.12 }))
+    const roofEdge = registerMaterial(new THREE.MeshStandardMaterial({ color: '#c48a4d', roughness: 0.42, metalness: 0.3 }))
+    const opening = registerMaterial(new THREE.MeshStandardMaterial({ color: '#150f12', roughness: 0.92, metalness: 0 }))
+    addBox(group, [12.4, 0.3, 5.8], [0, 0.15, 0], dark)
+    addBox(group, [11.8, 0.26, 6.7], [0, 0.42, 0], stoneLight)
+    // The lower gatehouse is built as three deep passageways. Keeping the
+    // voids as real gaps between piers gives the viewer readable depth when
+    // orbiting, instead of a flat black rectangle painted on a solid box.
+    const portalCenters = [-2.8, 0, 2.8]
+    for (const x of portalCenters) {
+      addBox(group, [0.38, 3.45, 1.9], [x - 1.06, 1.95, 0], wall)
+      addBox(group, [0.38, 3.45, 1.9], [x + 1.06, 1.95, 0], wall)
+      addBox(group, [2.5, 0.42, 1.9], [x, 3.66, 0], wallLight)
+      addBox(group, [1.65, 2.28, 0.7], [x, 1.48, 0.82], opening)
+      addBox(group, [1.82, 0.16, 0.84], [x, 0.4, 1.08], roofEdge)
+      addBox(group, [0.18, 2.7, 0.38], [x - 0.84, 1.52, 1.1], roofEdge)
+      addBox(group, [0.18, 2.7, 0.38], [x + 0.84, 1.52, 1.1], roofEdge)
+      const arch = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.105, 10, 32, Math.PI), roofEdge))
+      arch.position.set(x, 2.68, 1.12); arch.rotation.z = Math.PI; group.add(arch)
+      // Recessed ceiling and a small threshold inside each passageway.
+      addBox(group, [1.5, 0.16, 1.35], [x, 2.95, 0.28], roofDark)
+      addBox(group, [1.42, 0.14, 0.62], [x, 0.58, 0.62], dark)
+    }
+    // End wings and the elevated central pavilion establish the five-tower
+    // silhouette of Yingtiamen while leaving the three central portals legible.
+    for (const x of [-5.1, 5.1]) {
+      addBox(group, [1.35, 4.35, 2.4], [x, 2.45, 0], wall)
+      addBox(group, [1.65, 0.3, 2.75], [x, 4.62, 0], roofEdge)
+      addRoof(group, 1.45, 0.58, 4.98, roofDark)
+      addFinials(group, 1.22, 5.24, roofEdge)
+    }
+    addBox(group, [3.55, 2.2, 2.6], [0, 5.85, 0], wallLight)
+    addBox(group, [3.95, 0.3, 3.0], [0, 6.88, 0], roofEdge)
+    addBox(group, [3.55, 0.22, 2.85], [0, 7.12, 0], roofDark)
+    addRoof(group, 2.7, 0.82, 7.68, roofDark)
+    addFinials(group, 2.3, 7.98, roofEdge)
+    // Connecting parapets, projecting eaves and small ridge ornaments supply
+    // the layered roof rhythm seen from the overview camera.
+    addBox(group, [10.8, 0.42, 2.65], [0, 4.76, 0], wall)
+    addBox(group, [11.5, 0.16, 3.05], [0, 5.04, 0], roofEdge)
+    addBox(group, [10.7, 0.22, 2.8], [0, 5.3, 0], roofDark)
+    for (const x of [-3.95, 3.95]) {
+      addBox(group, [2.8, 0.2, 2.65], [x, 5.05, 0], roofEdge)
+      addRoof(group, 1.85, 0.62, 5.48, roofDark)
+      addFinials(group, 1.55, 5.76, roofEdge)
+    }
+    for (const x of [-4.2, -1.4, 1.4, 4.2]) addBox(group, [0.22, 0.58, 0.34], [x, 5.65, 1.12], roofEdge)
   } else if (kind === 'grotto') {
-    addBox(group, [8.8, 1.45, 2.25], [0, 0.72, 0], dark); addBox(group, [8.35, 3.3, 1.4], [0, 2.45, 0.15], stone)
-    for (let i = -3; i <= 3; i += 1) { const x = i * 1.22; const head = setMeshProps(new THREE.Mesh(new THREE.SphereGeometry(0.56, 24, 16), stoneLight)); head.position.set(x, 3.04 + Math.abs(i) * 0.12, -0.72); group.add(head); addBox(group, [1.08, 1.95, 0.74], [x, 1.58, -0.68], stone); const aura = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.045, 10, 32), cyan)); aura.position.set(x, 3.04 + Math.abs(i) * 0.12, -1.25); aura.rotation.x = Math.PI / 2; group.add(aura) }
-    const halo = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.1, 14, 64), gold)); halo.position.set(0, 3.16, -0.92); halo.rotation.x = Math.PI / 2; group.add(halo)
+    // Longmen-style cliff face: recessed niches and a staggered ledge make
+    // the fallback read as carved rock instead of a row of floating spheres.
+    addBox(group, [10.2, 0.42, 4.8], [0, 0.21, 0], dark)
+    addBox(group, [9.5, 3.9, 1.45], [0, 2.18, 0.32], stone)
+    addBox(group, [8.7, 0.4, 1.9], [0, 4.18, 0.15], stoneLight)
+    for (let i = -4; i <= 4; i += 1) {
+      const x = i * 1.04
+      const height = i % 2 === 0 ? 2.7 : 2.35
+      addBox(group, [0.22, height, 1.72], [x, 2.0, 0.18], dark)
+    }
+    for (let i = -3; i <= 3; i += 1) {
+      const x = i * 1.22
+      const statueY = 2.88 + Math.abs(i) * 0.12
+      const niche = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.13, 10, 28, Math.PI), stoneLight))
+      niche.position.set(x, statueY + 0.13, -0.58); niche.rotation.z = Math.PI; group.add(niche)
+      const pedestal = addBox(group, [1.0, 0.3, 0.72], [x, 0.93, -0.7], stoneLight)
+      pedestal.rotation.y = i % 2 ? 0.05 : -0.05
+      const body = addBox(group, [0.9, 1.65, 0.66], [x, 1.82, -0.68], stone)
+      body.scale.x = i === 0 ? 1.14 : 0.96
+      const head = setMeshProps(new THREE.Mesh(new THREE.SphereGeometry(i === 0 ? 0.63 : 0.5, 20, 14), stoneLight))
+      head.position.set(x, statueY, -0.74); group.add(head)
+      const aura = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(i === 0 ? 0.88 : 0.68, 0.045, 10, 32), cyan))
+      aura.position.set(x, statueY, -1.16); group.add(aura)
+    }
+    const halo = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.1, 14, 64), gold)); halo.position.set(0, 3.18, -1.16); group.add(halo)
+    addBox(group, [9.7, 0.22, 0.26], [0, 4.5, -0.64], gold)
   } else if (kind === 'garden') {
-    addBox(group, [5.8, 0.4, 4.2], [0, 0.23, 0], dark); const water = setMeshProps(new THREE.Mesh(new THREE.CircleGeometry(4.1, 64), new THREE.MeshPhysicalMaterial({ color: '#23515a', roughness: 0.13, metalness: 0.4, clearcoat: 0.7, transparent: true, opacity: 0.9 }))); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.055, 3.4); group.add(water); addRoof(group, 3.5, 1.12, 4.15, gold); for (const x of [-2.2, 2.2]) for (const z of [-1.35, 1.1]) addBox(group, [0.46, 2.95, 0.46], [x, 1.55, z], red); addBox(group, [5.0, 0.3, 0.3], [0, 3, -1.35], red); addBox(group, [4.4, 0.25, 1.1], [0, 0.36, 1.6], stoneLight); for (let i = -2; i <= 2; i += 1) { const lantern = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.42, 8), gold)); lantern.position.set(i * 1.25, 0.8, -2.15); group.add(lantern) }
+    // A compact Song-style garden composition: pavilion, pond, bridge and
+    // planting stones establish depth while keeping the draw count modest.
+    addBox(group, [10.2, 0.24, 8.8], [0, 0.12, 0], dark)
+    const waterMaterial = registerMaterial(new THREE.MeshPhysicalMaterial({ color: '#23515a', roughness: 0.13, metalness: 0.4, clearcoat: 0.7, transparent: true, opacity: 0.9 }))
+    const water = setMeshProps(new THREE.Mesh(new THREE.CircleGeometry(3.9, 48), waterMaterial)); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.2, 2.55); group.add(water)
+    // Pavilion on the far bank.
+    addBox(group, [5.35, 0.28, 3.15], [0, 0.46, -1.55], stoneLight)
+    addBox(group, [4.65, 0.22, 2.75], [0, 3.23, -1.55], gold)
+    addRoof(group, 3.45, 1.1, 3.9, gold, Math.PI / 4, 0, -1.55)
+    for (const x of [-2.15, 2.15]) for (const z of [-2.65, -0.45]) addColumn(group, x, 0.58, z, 2.45, red, 0.17)
+    for (const x of [-1.05, 1.05]) addWindow(group, x, 1.72, -2.67, 0.72, 0.9, dark)
+    // Low bridge crossing the near edge of the pond.
+    addBox(group, [4.6, 0.28, 0.75], [0, 0.52, 1.45], stoneLight)
+    for (const x of [-1.8, -0.9, 0, 0.9, 1.8]) addBox(group, [0.16, 0.62, 0.16], [x, 0.86, 1.07], red)
+    addBox(group, [4.0, 0.16, 0.16], [0, 1.16, 1.07], red)
+    // Garden stones and a lantern rhythm in the foreground.
+    for (const [x, z, scale] of [[-3.6, 2.2, 0.72], [3.4, 2.9, 0.56], [-3.15, -0.5, 0.48]] as Array<[number, number, number]>) {
+      const rock = setMeshProps(new THREE.Mesh(new THREE.DodecahedronGeometry(scale, 1), stone)); rock.position.set(x, scale * 0.65, z); group.add(rock)
+    }
+    for (let i = -2; i <= 2; i += 1) { const lantern = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.42, 8), gold)); lantern.position.set(i * 1.25, 0.8, -3.45); group.add(lantern); addColumn(group, i * 1.25, 0.2, -3.45, 0.35, dark, 0.06) }
+  } else if (kind === 'street') {
+    // Street profile: two rows of low shopfronts around a pedestrian axis,
+    // clearly different from both the pagoda and the temple courtyard.
+    addBox(group, [10.5, 0.22, 8.4], [0, 0.11, 0], dark)
+    addBox(group, [1.55, 0.18, 8.4], [0, 0.24, 0], stoneLight)
+    for (const side of [-1, 1]) {
+      for (let index = 0; index < 4; index += 1) {
+        const z = -3 + index * 2
+        const height = 1.85 + (index % 2) * 0.25
+        addBox(group, [3.65, height, 1.45], [side * 3.25, 1.08, z], stone)
+        addBox(group, [3.9, 0.14, 1.72], [side * 3.25, 2.05 + (index % 2) * 0.25, z], gold)
+        addRoof(group, 1.45, 0.42, 2.28 + (index % 2) * 0.25, gold)
+        addWindow(group, side * 3.25, 1.26, z - 0.76, 1.05, 0.75, dark)
+        addBox(group, [2.2, 0.14, 0.12], [side * 3.25, 0.62, z - 0.77], red)
+        addColumn(group, side * 1.55, 0.36, z - 0.79, 1.55, red, 0.08)
+      }
+    }
+    addBox(group, [1.0, 3.2, 0.26], [-1.9, 1.7, -3.85], red)
+    addBox(group, [1.0, 3.2, 0.26], [1.9, 1.7, -3.85], red)
+    addBox(group, [4.1, 0.28, 0.32], [0, 3.25, -3.85], gold)
+    addRoof(group, 2.9, 0.62, 3.72, gold)
+    for (const z of [-3.1, -1.3, 0.5, 2.3]) {
+      const lantern = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.38, 8), gold)); lantern.position.set(0, 1.1, z); group.add(lantern)
+    }
   } else {
-    addBox(group, [7.2, 0.9, 4.5], [0, 0.45, 0], dark); addBox(group, [6.1, 3.05, 3.35], [0, 2.25, 0], stone); addRoof(group, 4.8, 1.45, 4.45, gold); addBox(group, [1.4, 2.05, 0.32], [0, 1.3, -1.7], dark); for (const x of [-2.15, 2.15]) addBox(group, [0.48, 2.6, 0.48], [x, 1.65, -1.72], red); for (let i = -2; i <= 2; i += 1) addBox(group, [0.16, 2.2, 0.16], [i * 0.65, 1.55, -1.88], gold); addBox(group, [6.6, 0.18, 0.35], [0, 3.9, -1.55], cyan)
+    // Temple profile: a courtyard axis with several low halls. Keeping this
+    // separate from the pagoda branch prevents every missing asset from
+    // falling back to a tower-like silhouette.
+    addBox(group, [10.4, 0.32, 9.2], [0, 0.16, 0], dark)
+    const halls = [
+      { z: -3.05, width: 5.8, depth: 2.15, height: 2.25, roof: 3.55 },
+      { z: 0.05, width: 6.5, depth: 2.45, height: 2.55, roof: 3.95 },
+      { z: 3.0, width: 5.4, depth: 2.05, height: 2.15, roof: 3.35 },
+    ]
+    halls.forEach((hall, index) => {
+      addBox(group, [hall.width, hall.height, hall.depth], [0, 1.25, hall.z], stone)
+      addRoof(group, hall.roof, 0.72, 2.72 + index * 0.05, gold)
+      addBox(group, [hall.width + 0.35, 0.14, hall.depth + 0.22], [0, 2.58 + index * 0.05, hall.z], gold)
+      for (const x of [-hall.width * 0.38, hall.width * 0.38]) addColumn(group, x, 0.34, hall.z - hall.depth * 0.51, hall.height + 0.18, red, 0.12)
+      addBox(group, [hall.width * 0.36, 1.2, 0.18], [0, 0.86, hall.z - hall.depth * 0.53], dark)
+      for (const x of [-hall.width * 0.22, hall.width * 0.22]) addWindow(group, x, 1.5, hall.z - hall.depth * 0.54, 0.55, 0.78, dark)
+    })
+    // A simple mountain gate anchors the front of the axial sequence.
+    addBox(group, [7.6, 0.25, 0.35], [0, 2.95, -4.0], gold)
+    addColumn(group, -3.25, 0.33, -4.0, 2.55, red, 0.18); addColumn(group, 3.25, 0.33, -4.0, 2.55, red, 0.18)
+    addRoof(group, 4.25, 0.74, 3.14, gold, Math.PI / 4, 0, -4.0)
+    addBox(group, [8.8, 0.22, 0.28], [0, 2.95, -1.2], cyan)
+    addBox(group, [0.3, 2.2, 8.4], [-4.55, 1.2, 0], red)
+    addBox(group, [0.3, 2.2, 8.4], [4.55, 1.2, 0], red)
   }
   group.rotation.y = -0.28; scene.add(group)
   const scanBeamGeometry = new THREE.PlaneGeometry(14, 0.06); scanMaterial = new THREE.MeshBasicMaterial({ color: 0x65e3e2, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }); const scanBeam = new THREE.Mesh(scanBeamGeometry, scanMaterial); scanBeam.rotation.x = -Math.PI / 2; scanBeam.position.y = 0.1; scene.add(scanBeam)
@@ -136,19 +340,26 @@ async function loadReviewedAsset(scene: THREE.Scene, fallback: THREE.Group, rend
       dracoDecoderPath: '/draco/',
       ktx2TranscoderPath: '/basis/',
       signal: controller.signal,
+      preferDetail: isPagodaShowcase.value,
       onProgress: (progress) => { loadProgress.value = Math.round(progress * 100) },
     })
     if (!asset || controller.signal.aborted) return
     loadedModel = asset.root
-    // Reviewed scans keep their authored image maps. The current reconstruction
-    // contains only solid-color materials, so add deterministic PBR micro-detail
-    // until an authorized photogrammetry asset is available.
-    applyProceduralHeritageMaterials(loadedModel, { textureSize: asset.lod === 'high' ? 128 : 96 })
+    // Count before generating optional procedural maps. Large scans often have
+    // hundreds of materials; generating 96px maps for each one synchronously
+    // blocks the main thread while the loading overlay is still visible.
+    let importedMeshCount = 0
+    loadedModel.traverse((object) => { if (object instanceof THREE.Mesh) importedMeshCount += 1 })
+    // Reviewed scans keep their authored image maps. The pagoda's GLB already
+    // contains separated glazed-brick, eave and carved-brick materials; adding
+    // procedural noise over those colors made the showcase muddy, so preserve
+    // its authored material palette. Other reconstruction assets still receive
+    // the lightweight PBR treatment until an authorized scan is available.
+    const textureSize = importedMeshCount > 480 ? 48 : importedMeshCount > 220 ? 64 : asset.lod === 'high' ? 96 : 72
+    if (!isPagodaShowcase.value) applyProceduralHeritageMaterials(loadedModel, { textureSize, replaceExistingMap: false, normalStrength: 0.12 })
     loadedRealAsset.value = true
     assetManifest.value = asset.manifest
     assetLod.value = asset.lod
-    let importedMeshCount = 0
-    loadedModel.traverse((object) => { if (object instanceof THREE.Mesh) importedMeshCount += 1 })
     // Detailed architectural GLBs can contain hundreds of small brick and
     // frame meshes. Rendering every one into the shadow map doubles the draw
     // calls and is the main source of wheel/pinch jank. Keep receiver shading
@@ -166,8 +377,8 @@ async function loadReviewedAsset(scene: THREE.Scene, fallback: THREE.Group, rend
     fallback.visible = false
     environment.children.slice(1).forEach((child) => { child.visible = false })
     particles.visible = false
-    scene.background = new THREE.Color('#b9ad9a')
-    scene.fog = new THREE.Fog('#b9ad9a', 24, 70)
+    scene.background = new THREE.Color(isPagodaShowcase.value ? '#1a2527' : props.kind === 'gate' ? '#24191a' : '#b9ad9a')
+    scene.fog = new THREE.Fog(isPagodaShowcase.value ? '#1a2527' : props.kind === 'gate' ? '#24191a' : '#b9ad9a', isPagodaShowcase.value || props.kind === 'gate' ? 32 : 24, 70)
     modelStatus.value = `${asset.manifest?.assetStatus ?? 'GLB 资产'} · ${asset.lod.toUpperCase()} 已载入`
     scanEnabled.value = false
     if (scanMaterial) scanMaterial.opacity = 0
@@ -210,7 +421,11 @@ function frameImportedModel(root: THREE.Object3D, immersiveScale = 1, remember =
   const verticalFov = THREE.MathUtils.degToRad(camera.fov)
   const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * aspect)
   const limitingFov = Math.min(verticalFov, horizontalFov)
-  modelFitDistance = sphere.radius / Math.sin(limitingFov / 2) * 1.12
+  // The hero pagoda is tall and narrow; the generic 12% safety margin leaves
+  // too much dead air around it in the detail card. Keep a small edge margin
+  // while allowing the tower to occupy the frame.
+  const fitMargin = isPagodaShowcase.value ? 1.03 : 1.12
+  modelFitDistance = sphere.radius / Math.sin(limitingFov / 2) * fitMargin
   const direction = camera.position.clone().sub(controls.target)
   if (direction.lengthSq() < 0.001) direction.set(1, 0.3, 1)
   const destination = modelFocusTarget.clone().add(direction.normalize().multiplyScalar(modelFitDistance * immersiveScale))
@@ -231,6 +446,7 @@ function cameraForPreset(preset: CameraPreset) {
     gate: { overview: { position: [11, 7, 13], target: [0, 2.5, 0] }, detail: { position: [5.2, 3.8, 8.2], target: [0, 3, -0.7] }, axis: { position: [0, 4.1, 15], target: [0, 2.5, 0] }, top: { position: [0, 14, 0.1], target: [0, 2, 0] } },
     pagoda: { overview: { position: [10, 7.5, 12.5], target: [0, 3.6, 0] }, detail: { position: [4.3, 5.1, 7.1], target: [0, 5, 0] }, axis: { position: [0, 5.5, 15], target: [0, 3.8, 0] }, top: { position: [0, 16, 0.1], target: [0, 3.4, 0] } },
     garden: { overview: { position: [9, 6.2, 11], target: [0, 1.6, 0] }, detail: { position: [4.5, 3.5, 7.4], target: [0, 1.8, 1] }, axis: { position: [0, 4.2, 13], target: [0, 1.5, 0] }, top: { position: [0, 13, 0.1], target: [0, 0.8, 0] } },
+    street: { overview: { position: [10, 6.8, 12], target: [0, 1.5, 0] }, detail: { position: [5.2, 3.4, 7.5], target: [0, 1.2, -1.2] }, axis: { position: [0, 3.8, 14], target: [0, 1.2, 0] }, top: { position: [0, 13, 0.1], target: [0, 0.7, 0] } },
   }
   return values[props.kind][preset]
 }
@@ -270,6 +486,39 @@ function resizeRenderer() {
   renderer.domElement.style.height = '100%'
   renderer.domElement.style.position = 'absolute'
   renderer.domElement.style.inset = '0'
+}
+function prefersReducedQuality() {
+  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
+  const cores = navigator.hardwareConcurrency ?? 4
+  return Boolean(memory && memory <= 2) || cores <= 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+function startAnimation() {
+  if (animationRunning) return
+  animationRunning = true
+  lastRenderAt = 0
+  frame = requestAnimationFrame(tick)
+}
+function stopAnimation() {
+  animationRunning = false
+  cancelAnimationFrame(frame)
+}
+function tick(now: number) {
+  if (!animationRunning) return
+  frame = requestAnimationFrame(tick)
+  // A hidden tab or an off-screen detail panel should not consume a full GL
+  // render loop. Keep the callback alive so visibility/intersection changes
+  // resume immediately without rebuilding the scene.
+  if (!viewerVisible || document.hidden || !renderer || !camera) return
+  const frameInterval = lowPowerDevice ? 1000 / 30 : 1000 / 45
+  if (lastRenderAt && now - lastRenderAt < frameInterval) return
+  lastRenderAt = now
+  const elapsed = now / 1000
+  controls?.update()
+  if (!loadedRealAsset.value) groupForAnimation?.position.setY(Math.sin(elapsed * 0.6) * 0.025)
+  particlesForAnimation && (particlesForAnimation.rotation.y = elapsed * 0.012)
+  if (scanBeamForAnimation) scanBeamForAnimation.position.y = scanEnabled.value ? 0.18 + ((elapsed * 0.9) % 5.8) : -20
+  animatedRings.forEach(({ mesh, speed, baseY }, index) => { mesh.rotation.z = elapsed * speed; mesh.position.y = baseY + Math.sin(elapsed * 1.2 + index) * 0.012 })
+  if (sceneForAnimation) renderer.render(sceneForAnimation, camera)
 }
 function animateCamera(position: THREE.Vector3, target: THREE.Vector3, duration = 220) {
   if (!camera || !controls) return
@@ -331,8 +580,14 @@ onMounted(() => {
     return
   }
   if (!mount.value) return
-  const { scene, camera: sceneCamera, group, particles, scanBeam, environment } = buildScene(props.kind)
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setSize(Math.max(1, mount.value.clientWidth), Math.max(1, mount.value.clientHeight), false); renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%'; renderer.domElement.style.position = 'absolute'; renderer.domElement.style.inset = '0'; renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; mount.value.appendChild(renderer.domElement)
+  lowPowerDevice = prefersReducedQuality()
+  const quality = viewerQuality()
+  const { scene, camera: sceneCamera, group, particles, scanBeam, environment } = buildScene(props.kind, quality)
+  sceneForAnimation = scene
+  groupForAnimation = group
+  particlesForAnimation = particles
+  scanBeamForAnimation = scanBeam
+  renderer = new THREE.WebGLRenderer({ antialias: !lowPowerDevice, alpha: true, powerPreference: 'high-performance' }); renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPowerDevice ? 1 : 1.25)); renderer.setSize(Math.max(1, mount.value.clientWidth), Math.max(1, mount.value.clientHeight), false); renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%'; renderer.domElement.style.position = 'absolute'; renderer.domElement.style.inset = '0'; renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12; renderer.shadowMap.enabled = !lowPowerDevice; renderer.shadowMap.type = THREE.PCFSoftShadowMap; mount.value.appendChild(renderer.domElement)
   const pmremGenerator = new THREE.PMREMGenerator(renderer)
   const environmentScene = new RoomEnvironment()
   environmentMap = pmremGenerator.fromScene(environmentScene, 0.04).texture
@@ -352,17 +607,25 @@ onMounted(() => {
   resizeObserver.observe(mount.value)
   const focusView = () => { if (!camera || !controls) return; const direction = camera.position.clone().sub(controls.target).normalize(); camera.position.copy(controls.target.clone().add(direction.multiplyScalar(7.2))); controls.update(); viewerState.value = '焦点已锁定 · 细部观察' }
   renderer.domElement.addEventListener('dblclick', focusView)
-  const clock = new THREE.Clock(); const tick = () => { const elapsed = clock.getElapsedTime(); controls?.update(); if (!loadedRealAsset.value) group.position.y = Math.sin(elapsed * 0.6) * 0.025; particles.rotation.y = elapsed * 0.012; scanBeam.position.y = scanEnabled.value ? 0.18 + ((elapsed * 0.9) % 5.8) : -20; animatedRings.forEach(({ mesh, speed, baseY }, index) => { mesh.rotation.z = elapsed * speed; mesh.position.y = baseY + Math.sin(elapsed * 1.2 + index) * 0.012 }); renderer?.render(scene, sceneCamera); frame = requestAnimationFrame(tick) }; tick()
+  startAnimation()
   fullscreenHandler = updateFullscreenState; document.addEventListener('fullscreenchange', fullscreenHandler)
-  cleanup = () => { requestController?.abort(); window.removeEventListener('resize', resize); resizeObserver?.disconnect(); resizeObserver = undefined; document.removeEventListener('fullscreenchange', fullscreenHandler ?? updateFullscreenState); renderer?.domElement.removeEventListener('dblclick', focusView); controls?.removeEventListener('start', interactionStart); cancelAnimationFrame(frame); cancelAnimationFrame(cameraTransitionFrame); controls?.dispose(); disposeObject3D(scene); disposeProceduralMaterialCache(); environmentMap?.dispose(); environmentMap = undefined; loadedModel = undefined; modelDefaultFrame = undefined; animatedRings.length = 0; trackedMaterials.length = 0; scanMaterial = undefined; immersiveCameraSnapshot = undefined; renderer?.dispose(); renderer?.domElement.remove(); renderer = undefined }
+  documentVisibilityHandler = () => { if (document.hidden) stopAnimation(); else if (viewerVisible) startAnimation() }
+  document.addEventListener('visibilitychange', documentVisibilityHandler)
+  visibilityObserver = new IntersectionObserver((entries) => {
+    viewerVisible = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio > 0)
+    if (viewerVisible && !document.hidden) startAnimation()
+    else stopAnimation()
+  }, { threshold: 0.01 })
+  visibilityObserver.observe(mount.value)
+  cleanup = () => { requestController?.abort(); window.removeEventListener('resize', resize); resizeObserver?.disconnect(); resizeObserver = undefined; visibilityObserver?.disconnect(); visibilityObserver = undefined; if (documentVisibilityHandler) document.removeEventListener('visibilitychange', documentVisibilityHandler); documentVisibilityHandler = undefined; document.removeEventListener('fullscreenchange', fullscreenHandler ?? updateFullscreenState); renderer?.domElement.removeEventListener('dblclick', focusView); controls?.removeEventListener('start', interactionStart); stopAnimation(); cancelAnimationFrame(cameraTransitionFrame); controls?.dispose(); disposeObject3D(scene); disposeProceduralMaterialCache(); environmentMap?.dispose(); environmentMap = undefined; loadedModel = undefined; modelDefaultFrame = undefined; lowPowerDevice = false; animatedRings.length = 0; trackedMaterials.length = 0; scanMaterial = undefined; immersiveCameraSnapshot = undefined; sceneForAnimation = undefined; groupForAnimation = undefined; particlesForAnimation = undefined; scanBeamForAnimation = undefined; renderer?.dispose(); renderer?.forceContextLoss(); renderer?.domElement.remove(); renderer = undefined }
 })
 onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 </script>
 
 <template>
-  <div ref="mount" class="model-canvas" :class="{ 'external-active': Boolean(externalEmbed), immersive }" aria-label="建筑三维模型浏览器">
+  <div ref="mount" class="model-canvas" :class="{ 'external-active': Boolean(externalEmbed), immersive, 'pagoda-showcase': isPagodaShowcase }" aria-label="建筑三维模型浏览器">
     <iframe v-if="externalEmbed" class="external-model" :src="externalEmbed" title="授权平台实景三维模型" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen loading="lazy" />
-    <div class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ modelLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
+    <div class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ modelLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ isPagodaShowcase ? '重点展项 · ' : '' }}{{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
     <div v-if="!externalEmbed" class="viewer-toolbar" aria-label="模型控制"><button type="button" :class="{ active: autoRotate }" title="自动巡游" @click="toggleAutoRotate"><span>◉</span> 巡游</button><button type="button" :class="{ active: showPresets }" title="导览视角" @click="showPresets = !showPresets"><span>⌖</span> 视角</button><button type="button" :class="{ active: scanEnabled }" title="扫描辅助" @click="toggleScan"><span>⌁</span> 扫描</button><button type="button" :class="{ active: wireframe }" title="线框模式" @click="toggleWireframe"><span>⌗</span> 线框</button><button type="button" title="重置视角" @click="resetCamera"><span>↺</span> 复位</button><button type="button" :class="{ active: immersive }" title="沉浸式全屏" @click="toggleImmersive"><span>⛶</span> 沉浸</button><div v-if="showPresets" class="preset-menu"><button type="button" @click="applyCameraPreset('overview')">整体形制</button><button type="button" @click="applyCameraPreset('detail')">构件细部</button><button type="button" @click="applyCameraPreset('axis')">空间轴线</button><button type="button" @click="applyCameraPreset('top')">俯瞰关系</button></div></div>
   </div>
 </template>
@@ -373,6 +636,10 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 .model-canvas:fullscreen { position: fixed; inset: 0; width: 100vw; height: 100dvh; min-height: 100dvh; margin: 0; }
 .model-canvas.external-active { background: #07121a; }
 .model-canvas.external-active::before, .model-canvas.external-active::after { display: none; }
+.model-canvas.pagoda-showcase { background: radial-gradient(circle at 52% 32%, #5f4938 0%, #263236 32%, #0b151a 78%); }
+.model-canvas.pagoda-showcase::before { background: linear-gradient(180deg, rgba(214, 164, 101, .16), transparent 28%, transparent 68%, rgba(2, 8, 12, .86)); }
+.model-canvas.pagoda-showcase .hud-kicker { color: #d4a56a; }
+.model-canvas.pagoda-showcase .live-pill { border-color: rgba(211, 163, 101, .5); color: #e3bd84; }
 .model-canvas::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(2, 9, 13, .28), transparent 24%, transparent 68%, rgba(2, 8, 12, .82)); }
 .model-canvas::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(131, 222, 220, .12) 4px, transparent 5px); mix-blend-mode: screen; }
 .model-canvas :deep(canvas) { position: absolute !important; inset: 0; z-index: 0; display: block; width: 100% !important; height: 100% !important; }

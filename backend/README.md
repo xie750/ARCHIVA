@@ -1,6 +1,6 @@
-# 河南建筑数字志 API
+# 中国建筑数字志 API
 
-这是“河南建筑数字志”出版 Demo 的 Spring Boot 模块化单体后端。当前使用本地 SQLite 保存建筑、景区和 POI 示例数据，接口和领域模型已经按后续接入 PostgreSQL/PostGIS、Redis 和对象存储的方式拆分。
+这是“中国建筑数字志”出版 Demo 的 Spring Boot 模块化单体后端。当前以河南为首发展区，使用本地 SQLite 保存建筑、景区和 POI 示例数据，接口和领域模型已经按后续接入 PostgreSQL/PostGIS、Redis 和对象存储的方式拆分。
 
 ## 技术栈
 

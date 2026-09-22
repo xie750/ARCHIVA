@@ -4,6 +4,7 @@ import java.util.List;
 
 public record Building(
         String id,
+        String region,
         String name,
         String alias,
         String city,
@@ -23,6 +24,9 @@ public record Building(
         ModelManifest modelManifest
 ) {
     public Building {
+        // Existing SQLite payloads predate the region field. Keep those records
+        // readable while making the region explicit for future provinces.
+        region = region == null || region.isBlank() ? "河南" : region.trim();
         tags = tags == null ? List.of() : List.copyOf(tags);
         contentSections = contentSections == null ? List.of() : List.copyOf(contentSections);
         sourceReferences = sourceReferences == null ? List.of() : List.copyOf(sourceReferences);

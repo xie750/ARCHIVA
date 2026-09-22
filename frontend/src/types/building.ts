@@ -33,6 +33,8 @@ export interface ScenicPoint {
 
 export interface Building {
   id: string
+  /** Region/province label used by the national archive filters. */
+  region?: string
   name: string
   pinyin: string
   category: BuildingCategory
@@ -55,7 +57,7 @@ export interface Building {
   }
   status: '已收录' | '持续研究'
   model: {
-    kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden'
+    kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden' | 'street'
     version: string
     precision: string
     nodes: number

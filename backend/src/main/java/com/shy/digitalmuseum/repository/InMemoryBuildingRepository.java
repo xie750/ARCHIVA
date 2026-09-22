@@ -33,6 +33,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     private static Building songyuePagoda() {
         return new Building(
                 "songyue-pagoda",
+                "河南",
                 "嵩岳寺塔",
                 "嵩岳寺砖塔",
                 "郑州",
@@ -54,7 +55,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
                 ),
                 List.of(
                         new SourceReference("中国古代建筑史（第二版）", "刘敦桢", "中国建筑工业出版社", 2016, "出版物", "ISBN 9787112182019", "出版物引用需取得授权", "用于建筑年代与形制校核"),
-                        new SourceReference("嵩岳寺塔测绘资料（示例）", "数字建筑志项目组", "河南建筑数字志", 2026, "测绘资料", "internal://survey/songyue-pagoda", "项目内部资料", "待补充实测数据")
+                        new SourceReference("嵩岳寺塔测绘资料（示例）", "数字建筑志项目组", "中国建筑数字志", 2026, "测绘资料", "internal://survey/songyue-pagoda", "项目内部资料", "待补充实测数据")
                 ),
                 manifest("songyue-pagoda", "1.0.0", "https://cdn.example.com/henan/songyue-pagoda")
         );
@@ -63,6 +64,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     private static Building longmenGrottoes() {
         return new Building(
                 "longmen-grottoes",
+                "河南",
                 "龙门石窟奉先寺",
                 "奉先寺大像龛",
                 "洛阳",
@@ -93,6 +95,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     private static Building ironPagoda() {
         return new Building(
                 "kaifeng-iron-pagoda",
+                "河南",
                 "开封铁塔",
                 "祐国寺塔",
                 "开封",
@@ -122,6 +125,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     private static Building whiteHorseTemple() {
         return new Building(
                 "white-horse-temple",
+                "河南",
                 "白马寺",
                 "中国第一古刹",
                 "洛阳",
@@ -152,6 +156,7 @@ public class InMemoryBuildingRepository implements BuildingRepository {
     private static Building shaolinPagodaForest() {
         return new Building(
                 "shaolin-pagoda-forest",
+                "河南",
                 "少林寺塔林",
                 "少林寺历代高僧墓塔群",
                 "郑州",

@@ -29,6 +29,8 @@ export interface ModelLoadOptions {
   ktx2TranscoderPath?: string
   signal?: AbortSignal
   onProgress?: (progress: number) => void
+  /** Detail entry may explicitly request the manifest's high LOD. */
+  preferDetail?: boolean
 }
 
 export interface LoadedModel {
@@ -43,7 +45,7 @@ export interface LoadedModel {
 const DEFAULT_DRACO_PATH = '/draco/'
 const DEFAULT_KTX2_PATH = '/basis/'
 
-function chooseLod(manifest: BrowserModelManifest): { url: string; level: string } | undefined {
+function chooseLod(manifest: BrowserModelManifest, preferDetail = false): { url: string; level: string } | undefined {
   const assets = (manifest.lod ?? []).filter((asset) => Boolean(asset.url))
   if (!assets.length) return undefined
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
@@ -63,7 +65,7 @@ function chooseLod(manifest: BrowserModelManifest): { url: string; level: string
   // full-screen, so prefer the authored detail LOD when it is available.
   // Keep low-memory and constrained connections on the smaller contract.
   const wideViewport = typeof window !== 'undefined' && window.innerWidth >= 1280
-  const level = lowBandwidth || memory <= 2 ? coarse : wideViewport && detail ? detail : desktop
+  const level = lowBandwidth || memory <= 2 ? coarse : preferDetail && detail ? detail : wideViewport && detail ? detail : desktop
   return { url: level.url, level: level.level ?? 'default' }
 }
 
@@ -133,7 +135,7 @@ async function resolveManifest(options: ModelLoadOptions): Promise<BrowserModelM
 /** Load a reviewed glTF/GLB asset. Returns undefined when no asset URL was configured. */
 export async function loadModelAsset(options: ModelLoadOptions): Promise<LoadedModel | undefined> {
   const manifest = await resolveManifest(options)
-  const selected = options.modelUrl ? { url: options.modelUrl, level: 'direct' } : manifest && chooseLod(manifest)
+  const selected = options.modelUrl ? { url: options.modelUrl, level: 'direct' } : manifest && chooseLod(manifest, options.preferDetail)
   if (!selected) return undefined
   if (options.signal?.aborted) return undefined
 

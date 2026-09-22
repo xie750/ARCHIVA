@@ -1,6 +1,6 @@
-# 河南建筑数字志 · Web Demo
+# 中国建筑数字志 · Web Demo
 
-Vue 3 + TypeScript + Vite 的出版级前端 Demo。当前以河南篇为第一章，使用本地数据和 Three.js 程序化建筑预览表达完整的产品体验；正式版可把同一组件替换为基于 manifest 的 GLB 加载器。
+Vue 3 + TypeScript + Vite 的出版级前端 Demo。当前以河南篇为第一章，使用本地数据和 Three.js 程序化建筑预览表达完整的产品体验；正式版可把同一组件替换为基于 manifest 的 GLB 加载器，并按省份持续补充内容。
 
 ## 启动
 

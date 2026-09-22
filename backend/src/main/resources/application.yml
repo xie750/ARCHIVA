@@ -1,6 +1,6 @@
 spring:
   application:
-    name: henan-architecture-museum-api
+    name: china-architecture-museum-api
   datasource:
     url: jdbc:sqlite:./data/digital-museum.db
     driver-class-name: org.sqlite.JDBC

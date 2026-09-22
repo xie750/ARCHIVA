@@ -45,7 +45,7 @@ public class BuildingService {
                 .filter(building -> matches(building.type(), normalizedType))
                 .filter(building -> matches(building.dynasty(), normalizedDynasty))
                 .filter(building -> matches(building.city(), normalizedCity))
-                .filter(building -> !StringUtils.hasText(normalizedRegion) || "河南".equals(normalizedRegion))
+                .filter(building -> matches(building.region(), normalizedRegion))
                 .sorted(Comparator.comparing(Building::name))
                 .toList();
 

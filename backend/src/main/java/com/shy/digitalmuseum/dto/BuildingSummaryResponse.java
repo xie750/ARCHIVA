@@ -24,7 +24,7 @@ public record BuildingSummaryResponse(
     public static BuildingSummaryResponse from(Building building) {
         return new BuildingSummaryResponse(
                 building.id(),
-                "河南",
+                building.region(),
                 building.name(),
                 building.alias(),
                 building.city(),
