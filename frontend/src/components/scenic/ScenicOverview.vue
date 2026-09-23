@@ -138,6 +138,7 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 .map-canvas { position: absolute; inset: 0; z-index: 1; background: #d8d1c3; }
 .map-vignette { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(90deg, rgba(25,39,38,.16), transparent 24%, transparent 78%, rgba(25,39,38,.1)), linear-gradient(0deg, rgba(34,30,25,.2), transparent 26%); mix-blend-mode: multiply; }
 .map-scanline { position: absolute; z-index: 3; top: 0; left: 0; right: 0; height: 1px; pointer-events: none; background: rgba(226,194,137,.52); box-shadow: 0 0 18px rgba(226,194,137,.72); animation: map-scan 5s linear infinite; opacity: .55; }
+.map-vignette, .map-scanline { display: none; }
 .stage-compass { position: absolute; z-index: 4; right: 22px; top: 22px; display: grid; place-items: center; gap: 2px; color: #566d64; font-size: 9px; text-shadow: 0 1px 3px #fff; }.stage-compass svg { color: #a73e32; }
 .map-reset { position: absolute; z-index: 5; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(87,98,88,.45); padding: 6px 9px; color: #44584f; background: rgba(247,243,232,.9); font-size: 10px; box-shadow: 0 2px 7px rgba(49,48,41,.12); }
 .map-error { position: absolute; z-index: 5; top: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; color: #7c392f; background: rgba(255,246,229,.94); border: 1px solid rgba(167,62,50,.32); padding: 7px 11px; font-size: 10px; box-shadow: 0 3px 12px rgba(49,35,27,.16); }

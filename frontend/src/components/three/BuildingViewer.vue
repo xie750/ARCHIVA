@@ -227,14 +227,42 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
     addRoof(group, 2.2, 0.7, 5.15, pavilionRoof)
     addFinials(group, 1.65, 5.54, pavilionTrim)
   } else if (kind === 'pagoda') {
-    const pagodaLevels = props.variant === 'yingxian-wooden-pagoda' ? 5 : props.variant === 'xian-big-wild-goose-pagoda' ? 7 : 9
-    const levelStep = props.variant === 'yingxian-wooden-pagoda' ? 0.98 : props.variant === 'xian-big-wild-goose-pagoda' ? 0.9 : 0.78
-    const towerBody = props.variant === 'yingxian-wooden-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#70402c', roughness: 0.72, metalness: 0.04 })) : props.variant === 'xian-big-wild-goose-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#a98962', roughness: 0.8, metalness: 0.02 })) : stone
-    const towerRoof = props.variant === 'yingxian-wooden-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#3b2521', roughness: 0.78, metalness: 0.08 })) : dark
-    for (let i = 0; i < pagodaLevels; i += 1) { const width = (props.variant === 'yingxian-wooden-pagoda' ? 4.05 : 3.65) - i * (props.variant === 'yingxian-wooden-pagoda' ? 0.38 : 0.24); const baseY = 0.32 + i * levelStep; addBox(group, [width, 0.54, width], [0, baseY, 0], i % 2 ? towerBody : towerRoof); addBox(group, [width + 0.38, 0.1, width + 0.38], [0, baseY + 0.3, 0], gold); addRoof(group, width * 0.76, 0.58, baseY + 0.64, i % 2 ? gold : towerRoof); addFinials(group, width + 0.22, baseY + 0.43, gold); for (const x of [-width * 0.42, width * 0.42]) for (const z of [-width * 0.42, width * 0.42]) addBox(group, [0.14, 0.38, 0.14], [x, baseY + 0.16, z], stoneLight); if (props.variant === 'xian-big-wild-goose-pagoda' && i < pagodaLevels - 1) addBox(group, [0.5, 0.26, 0.16], [0, baseY + 0.18, -width * 0.51], gold) }
-    const towerHeight = 0.72 + (pagodaLevels - 1) * levelStep + 0.64
-    addBox(group, [0.72, towerHeight, 0.72], [0, towerHeight / 2, 0], stoneLight)
-    addBox(group, [0.15, towerHeight - 0.5, 0.15], [0, towerHeight / 2, 0], cyan)
+    // Each pagoda gets its own structural vocabulary in the fallback: timber
+    // frame and brackets for Yingxian, brick doors for Dayan, and a narrow
+    // glazed-brick shaft for Kaifeng. They are deliberately more than palette
+    // variants so the concept models still teach the differences in type.
+    const isYingxian = props.variant === 'yingxian-wooden-pagoda'
+    const isDayan = props.variant === 'xian-big-wild-goose-pagoda'
+    const pagodaLevels = isYingxian ? 5 : isDayan ? 7 : 13
+    const levelStep = isYingxian ? 1.08 : isDayan ? 0.88 : 0.66
+    const towerBody = isYingxian ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#70402c', roughness: 0.72, metalness: 0.04 })) : isDayan ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#aa8d67', roughness: 0.8, metalness: 0.02 })) : registerMaterial(new THREE.MeshStandardMaterial({ color: '#795442', roughness: 0.62, metalness: 0.14 }))
+    const towerBodyAlt = isYingxian ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#a3603c', roughness: 0.68, metalness: 0.03 })) : isDayan ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#c4a77a', roughness: 0.82, metalness: 0.01 })) : registerMaterial(new THREE.MeshStandardMaterial({ color: '#a46d4a', roughness: 0.58, metalness: 0.1 }))
+    const towerRoof = isYingxian ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#3b2521', roughness: 0.78, metalness: 0.08 })) : isDayan ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#6d5844', roughness: 0.84, metalness: 0.02 })) : registerMaterial(new THREE.MeshStandardMaterial({ color: '#352a26', roughness: 0.76, metalness: 0.18 }))
+    const towerTrim = isYingxian ? gold : isDayan ? towerBodyAlt : registerMaterial(new THREE.MeshStandardMaterial({ color: '#b78958', roughness: 0.48, metalness: 0.25 }))
+    const baseWidth = isYingxian ? 4.45 : isDayan ? 3.9 : 3.48
+    const taper = isYingxian ? 0.42 : isDayan ? 0.3 : 0.16
+    addBox(group, [baseWidth + 0.7, 0.3, baseWidth + 0.7], [0, 0.15, 0], isYingxian ? stoneLight : towerBodyAlt)
+    for (let i = 0; i < pagodaLevels; i += 1) {
+      const width = baseWidth - i * taper
+      const baseY = 0.5 + i * levelStep
+      const bodyMaterial = i % 2 ? towerBody : towerBodyAlt
+      addBox(group, [width, isYingxian ? 0.66 : 0.56, width], [0, baseY, 0], bodyMaterial)
+      addBox(group, [width + (isYingxian ? 0.62 : 0.38), 0.12, width + (isYingxian ? 0.62 : 0.38)], [0, baseY + (isYingxian ? 0.38 : 0.31), 0], towerTrim)
+      addRoof(group, width * (isYingxian ? 0.84 : 0.76), isYingxian ? 0.42 : 0.52, baseY + (isYingxian ? 0.7 : 0.62), towerRoof, isYingxian ? Math.PI / 4 : 0)
+      if (isYingxian) {
+        for (const x of [-width * 0.43, width * 0.43]) for (const z of [-width * 0.43, width * 0.43]) { addColumn(group, x, baseY - 0.02, z, 0.56, towerTrim, 0.1); addBox(group, [0.5, 0.12, 0.18], [x, baseY + 0.46, z], towerTrim) }
+        addBox(group, [width * 0.55, 0.16, 0.08], [0, baseY + 0.12, -width * 0.51], dark)
+      } else if (isDayan) {
+        const arch = setMeshProps(new THREE.Mesh(new THREE.TorusGeometry(Math.max(0.28, width * 0.16), 0.075, 10, 28, Math.PI), towerTrim)); arch.position.set(0, baseY + 0.2, -width * 0.515); arch.rotation.z = Math.PI; group.add(arch)
+        addBox(group, [width * 0.22, 0.45, 0.08], [0, baseY + 0.07, -width * 0.52], dark)
+      } else {
+        for (const side of [-1, 1]) addBox(group, [width * 0.72, 0.05, 0.06], [0, baseY + 0.08, side * width * 0.515], towerTrim)
+      }
+    }
+    const towerHeight = 0.82 + (pagodaLevels - 1) * levelStep + (isYingxian ? 0.82 : 0.7)
+    addBox(group, [isYingxian ? 0.58 : 0.48, towerHeight, isYingxian ? 0.58 : 0.48], [0, towerHeight / 2, 0], isYingxian ? dark : towerBody)
+    addRoof(group, isYingxian ? 1.25 : isDayan ? 1.45 : 1.05, 0.62, towerHeight + 0.08, towerRoof)
+    addFinials(group, isYingxian ? 1.55 : isDayan ? 1.7 : 1.3, towerHeight + 0.46, towerTrim)
   } else if (kind === 'gate') {
     // Yingtiamen / gate profile: three readable passageways, a deep red
     // gatehouse, layered eaves and framed openings. This gives the fallback

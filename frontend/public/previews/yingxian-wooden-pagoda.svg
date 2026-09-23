@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Yingxian Wooden Pagoda schematic preview</title>
+  <desc id="desc">A broad five-storey timber pagoda with exposed red-brown columns, deep dark eaves and a double lower roof.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8f5ed"/><stop offset="1" stop-color="#ebe4d8"/></linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9b5339"/><stop offset=".5" stop-color="#703326"/><stop offset="1" stop-color="#4c2824"/></linearGradient>
+    <linearGradient id="eave" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#30282a"/><stop offset="1" stop-color="#171c20"/></linearGradient>
+    <linearGradient id="trim" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#5b3027"/><stop offset=".45" stop-color="#c47a48"/><stop offset="1" stop-color="#4a2925"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="15"/></filter>
+  </defs>
+  <rect width="800" height="560" fill="url(#paper)"/>
+  <ellipse cx="400" cy="493" rx="220" ry="27" fill="#806552" opacity=".2" filter="url(#shadow)"/>
+  <path d="M176 495 H624" stroke="#c6b5a0" stroke-width="2" opacity=".66"/>
+  <g stroke-linejoin="round">
+    <!-- wide timber core with five visible storeys -->
+    <path d="M278 437 L294 151 L506 151 L522 437 Z" fill="#62402f" stroke="#3d2926" stroke-width="3"/>
+    <path d="M293 433 L307 162 H493 L507 433" fill="url(#wood)" stroke="#b16a43" stroke-opacity=".75" stroke-width="2"/>
+    <!-- exposed columns -->
+    <g fill="#4b2924" stroke="#bd7447" stroke-width="2">
+      <path d="M302 421 L309 164 L324 164 L320 421 Z"/><path d="M350 421 L354 160 L370 160 L368 421 Z"/>
+      <path d="M432 421 L430 160 L446 160 L450 421 Z"/><path d="M480 421 L476 164 L491 164 L498 421 Z"/>
+    </g>
+    <!-- lattice and shadowed bays -->
+    <g fill="#241f20" stroke="#d09358" stroke-opacity=".55" stroke-width="1.5">
+      <path d="M326 382 H347 V344 H326Z M373 382 H427 V344 H373Z M453 382 H474 V344 H453Z"/>
+      <path d="M326 321 H347 V283 H326Z M373 321 H427 V283 H373Z M453 321 H474 V283 H453Z"/>
+      <path d="M326 260 H347 V222 H326Z M373 260 H427 V222 H373Z M453 260 H474 V222 H453Z"/>
+      <path d="M326 199 H347 V172 H326Z M373 199 H427 V172 H373Z M453 199 H474 V172 H453Z"/>
+    </g>
+    <!-- deep eaves, one at each visible floor -->
+    <g fill="url(#eave)" stroke="#a76842" stroke-width="2">
+      <path d="M248 426 Q400 453 552 426 L530 414 Q400 432 270 414Z"/>
+      <path d="M258 365 Q400 391 542 365 L523 353 Q400 371 277 353Z"/>
+      <path d="M267 304 Q400 329 533 304 L515 292 Q400 310 285 292Z"/>
+      <path d="M276 243 Q400 267 524 243 L507 231 Q400 249 293 231Z"/>
+      <path d="M286 182 Q400 205 514 182 L497 170 Q400 188 303 170Z"/>
+    </g>
+    <!-- lower double roof and broad platform -->
+    <path d="M218 449 Q400 477 582 449 L554 430 Q400 451 246 430Z" fill="url(#eave)" stroke="#a76842" stroke-width="3"/>
+    <path d="M231 467 Q400 493 569 467 L548 452 Q400 472 252 452Z" fill="#202023" stroke="#bd7548" stroke-width="2"/>
+    <path d="M260 479 H540 L565 491 H235 Z" fill="#67402e" stroke="#3d2926" stroke-width="3"/>
+    <!-- upper crown -->
+    <path d="M306 143 Q400 117 494 143 L478 153 Q400 138 322 153Z" fill="url(#eave)" stroke="#a76842" stroke-width="2"/>
+    <path d="M330 132 Q400 101 470 132 L457 141 Q400 121 343 141Z" fill="#252124" stroke="#be7749" stroke-width="2"/>
+    <path d="M400 103 V73" stroke="#4f3028" stroke-width="7"/>
+    <path d="M380 78 Q400 60 420 78" fill="none" stroke="#a86940" stroke-width="4"/>
+    <circle cx="400" cy="61" r="6" fill="#be7848"/>
+  </g>
+</svg>

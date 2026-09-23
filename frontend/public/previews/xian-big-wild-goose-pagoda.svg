@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Big Wild Goose Pagoda schematic preview</title>
+  <desc id="desc">A square seven-tier brick pagoda with short projecting cornices and central arched openings.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8f5ed"/><stop offset="1" stop-color="#eae3d7"/></linearGradient>
+    <linearGradient id="brick" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c09264"/><stop offset=".5" stop-color="#987050"/><stop offset="1" stop-color="#614636"/></linearGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#76533d"/><stop offset="1" stop-color="#4e392f"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="15"/></filter>
+  </defs>
+  <rect width="800" height="560" fill="url(#paper)"/>
+  <ellipse cx="400" cy="493" rx="185" ry="25" fill="#7d624f" opacity=".2" filter="url(#shadow)"/>
+  <path d="M205 495 H595" stroke="#c6b5a0" stroke-width="2" opacity=".66"/>
+  <g stroke-linejoin="round">
+    <!-- seven square, tapering brick tiers; each has a short flat cornice -->
+    <path d="M276 460 L292 118 L492 118 L524 460 Z" fill="url(#brick)" stroke="#4c382e" stroke-width="3"/>
+    <path d="M292 118 L492 118 L508 132 L307 132 Z" fill="#d0a476" stroke="#684a38" stroke-width="2"/>
+    <path d="M276 460 L524 460 L540 476 L260 476 Z" fill="#78543d" stroke="#4c382e" stroke-width="3"/>
+    <g fill="#e1b681" stroke="#574133" stroke-width="2">
+      <path d="M267 420 L533 420 L526 433 L274 433Z"/><path d="M274 370 L526 370 L519 383 L281 383Z"/>
+      <path d="M281 320 L519 320 L512 333 L288 333Z"/><path d="M288 270 L512 270 L505 283 L295 283Z"/>
+      <path d="M295 220 L505 220 L498 233 L302 233Z"/><path d="M302 170 L498 170 L491 183 L309 183Z"/>
+      <path d="M309 120 L491 120 L484 133 L316 133Z"/>
+    </g>
+    <!-- central arched openings: seven recessed dark bays -->
+    <g fill="#3d302b" stroke="#d0a070" stroke-width="2">
+      <path d="M364 420 V401 Q400 370 436 401 V420Z"/><path d="M368 370 V352 Q400 325 432 352 V370Z"/>
+      <path d="M372 320 V304 Q400 280 428 304 V320Z"/><path d="M376 270 V256 Q400 235 424 256 V270Z"/>
+      <path d="M380 220 V208 Q400 190 420 208 V220Z"/><path d="M384 170 V159 Q400 144 416 159 V170Z"/>
+      <path d="M388 120 V111 Q400 99 412 111 V120Z"/>
+    </g>
+    <!-- brick courses and corner pilasters give the flat body scale -->
+    <g fill="none" stroke="#5f4636" stroke-opacity=".48" stroke-width="1.2">
+      <path d="M303 150 H495 M300 200 H500 M296 250 H504 M292 300 H508 M288 350 H512 M284 400 H516"/>
+      <path d="M315 133 V420 M485 133 V420"/>
+    </g>
+    <g fill="#9b704e" stroke="#4d392f" stroke-width="2">
+      <path d="M268 435 H532 L540 447 H260Z"/><path d="M275 385 H525 L533 397 H267Z"/>
+      <path d="M282 335 H518 L526 347 H274Z"/><path d="M289 285 H511 L519 297 H281Z"/>
+      <path d="M296 235 H504 L512 247 H288Z"/><path d="M303 185 H497 L505 197 H295Z"/>
+      <path d="M310 135 H490 L498 147 H302Z"/>
+    </g>
+    <!-- flat parapet crown, deliberately without cone roofs -->
+    <path d="M310 108 H490 L505 119 H295 Z" fill="#6a4937" stroke="#49362e" stroke-width="3"/>
+    <path d="M331 98 H469 L490 108 H310 Z" fill="#c09465" stroke="#5d4333" stroke-width="2"/>
+    <path d="M400 98 V72" stroke="#674635" stroke-width="5"/>
+    <path d="M386 76 H414" stroke="#b27a4f" stroke-width="3"/>
+  </g>
+</svg>

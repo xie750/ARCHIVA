@@ -8,7 +8,8 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "generate:pagoda-assets": "node scripts/generate-kaifeng-pagoda-assets.mjs"
+    "generate:pagoda-assets": "node scripts/generate-kaifeng-pagoda-assets.mjs",
+    "generate:shanhaiguan-gate-assets": "node scripts/generate-shanhaiguan-gate-assets.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.1",

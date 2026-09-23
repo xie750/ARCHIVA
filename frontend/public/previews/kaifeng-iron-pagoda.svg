@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Kaifeng Iron Pagoda schematic preview</title>
+  <desc id="desc">A slender thirteen-storey glazed-brick pagoda elevation, shown as an architectural reconstruction schematic.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8f5ed"/><stop offset="1" stop-color="#ece6da"/></linearGradient>
+    <linearGradient id="brick" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a86d4e"/><stop offset=".48" stop-color="#754331"/><stop offset="1" stop-color="#4c2d28"/></linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#3d2827"/><stop offset=".52" stop-color="#c08b5a"/><stop offset="1" stop-color="#422b2a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#edc37b"/><stop offset="1" stop-color="#9d6540"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+    <g id="iron-floor">
+      <path d="M-63 0 L-50 -7 L-34 -10 L-20 -14 L0 -17 L20 -14 L34 -10 L50 -7 L63 0 L48 4 L32 2 L0 0 L-32 2 Z" fill="url(#edge)" stroke="#3a2927" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M-42 3 L42 3 L35 25 L-35 25 Z" fill="url(#brick)" stroke="#3f2a28" stroke-width="1.4"/>
+      <path d="M-34 8 H34 M-31 16 H31" fill="none" stroke="#d09b67" stroke-opacity=".42" stroke-width="1"/>
+      <path d="M-46 25 L46 25 L36 31 L-36 31 Z" fill="#2f2525" stroke="#c48d5c" stroke-opacity=".65" stroke-width="1.2"/>
+      <path d="M-48 -1 L-41 -12 M48 -1 L41 -12" stroke="#e0b779" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <rect width="800" height="560" fill="url(#paper)"/>
+  <path d="M145 493 Q400 456 655 493 Q400 530 145 493Z" fill="#8f725e" opacity=".18" filter="url(#shadow)"/>
+  <path d="M185 495 H615" stroke="#c9b9a4" stroke-width="2" opacity=".65"/>
+  <g transform="translate(400 0)">
+    <path d="M-44 470 L-35 83 L35 83 L44 470 Z" fill="url(#brick)" stroke="#3d2928" stroke-width="3"/>
+    <path d="M-27 470 L-22 84 M27 470 L22 84" stroke="#dca56d" stroke-opacity=".35" stroke-width="2"/>
+    <path d="M0 470 V80" stroke="#271e20" stroke-opacity=".54" stroke-width="3"/>
+    <path d="M-60 468 L60 468 L76 484 L-76 484 Z" fill="#4d302d" stroke="#2f2525" stroke-width="3"/>
+    <path d="M-67 483 H67 L57 496 H-57 Z" fill="#b27b51" stroke="#3b2928" stroke-width="2"/>
+    <g transform="translate(0 423) scale(.96 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 393) scale(.93 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 363) scale(.90 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 333) scale(.87 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 303) scale(.84 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 273) scale(.81 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 243) scale(.78 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 213) scale(.75 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 183) scale(.72 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 153) scale(.69 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 123) scale(.66 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 93) scale(.63 1)"><use xlink:href="#iron-floor"/></g>
+    <g transform="translate(0 63) scale(.60 1)"><use xlink:href="#iron-floor"/></g>
+    <path d="M-12 57 L0 27 L12 57 Z" fill="#3d2928" stroke="#b47d51" stroke-width="2"/>
+    <path d="M0 27 V-1" stroke="#4f3430" stroke-width="4"/>
+    <path d="M-12 4 Q0 -9 12 4" fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <circle cx="0" cy="-5" r="5" fill="#bd864c"/>
+  </g>
+</svg>

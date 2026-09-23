@@ -442,3 +442,87 @@ body {
     scroll-behavior: auto !important; transition-duration: .01ms !important;
   }
 }
+
+/* Editorial reset: the archive uses paper, ink and documented image states.
+   Keep the 3D stage dark, but do not use gradients to impersonate building photos. */
+body { background: var(--paper, #f6f1e8); background-image: none; }
+.topbar { background: rgba(246, 241, 232, .96); box-shadow: none; backdrop-filter: none; }
+.brand-mark { filter: none; }
+.nav-link::after { background: #a73e32; }
+.eyebrow::before { background: currentColor; }
+.hero-copy h1 { text-shadow: none; font-size: clamp(44px, 5.2vw, 68px); }
+.hero-copy h1 span { white-space: nowrap; }
+.hero-copy h1 span { color: #a73e32; background: none; -webkit-text-fill-color: currentColor; }
+.button-primary { background: #a73e32; box-shadow: none; }
+.button-primary:hover { background: #8c3027; box-shadow: none; filter: none; }
+.button-ghost { background: transparent; box-shadow: none; }
+.button-ghost:hover { background: #eee5da; box-shadow: none; }
+.hero-art { border: 1px solid #cfc5b7; border-radius: 2px; background: #e7e2d9; box-shadow: none; }
+.hero-art::before { background: none; }
+.hero-art::after { color: #66716d; text-shadow: none; }
+.hero-art-label { color: #66716d; }
+.hero-art-label span { color: #8a918b; }
+.hero-placeholder { position: absolute; inset: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px; border: 1px solid #cfc5b7; color: #68736f; text-align: center; }
+.hero-placeholder::before { content: ''; width: 58px; height: 78px; border: 1px solid #a73e32; border-bottom: 0; opacity: .7; }
+.hero-placeholder-kicker, .hero-placeholder small { font-size: 10px; letter-spacing: .14em; }
+.hero-placeholder strong { color: #1f3435; font: 600 24px 'Noto Serif SC', serif; }
+.hero-placeholder small { color: #8a918b; letter-spacing: .04em; }
+.hero-sculpture { display: none; }
+.feature-card { min-height: 390px; border: 1px solid #cfc5b7; border-radius: 2px; background: #e7e2d9; box-shadow: none; color: #1f3435; transition: border-color .2s ease; display: grid; grid-template-rows: 1fr auto; align-items: stretch; padding: 0; }
+.feature-card:hover { transform: none; border-color: #a73e32; box-shadow: none; }
+.feature-card::before, .feature-card::after { display: none; }
+.feature-card-placeholder { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; border-bottom: 1px solid #cfc5b7; color: #78817d; min-height: 250px; }
+.feature-card-placeholder span { font-size: 10px; letter-spacing: .15em; }
+.feature-card-placeholder strong { color: #1f3435; font: 600 20px 'Noto Serif SC', serif; }
+.feature-card .feature-content { position: relative; z-index: 1; padding: 21px 30px 25px; max-width: none; }
+.feature-card h3 { color: #1f3435; font-size: 27px; margin: 7px 0 4px; }
+.feature-card p { color: #69716f; }
+.feature-card .tagline { color: #a73e32; }
+.mini-card { border-radius: 2px; background: #fbf8f1; box-shadow: none; }
+.mini-card:hover { transform: none; box-shadow: none; border-color: #a73e32; }
+.map-panel { background: #ebe7de; box-shadow: none; }
+.map-panel::before { background-image: linear-gradient(#d5cec2 1px, transparent 1px), linear-gradient(90deg, #d5cec2 1px, transparent 1px); }
+.map-shape { background: transparent; border: 1px solid #b8c1bc; opacity: .65; }
+.map-dot { animation: none; box-shadow: 0 0 0 5px rgba(167, 62, 50, .12); }
+.building-card { border-radius: 2px; box-shadow: none; }
+.building-card:hover { transform: none; border-color: #a73e32; box-shadow: none; }
+.building-cover { height: 230px; background: #e7e2d9; color: #6d7773; }
+.building-cover::before, .building-cover::after { display: none; }
+.building-cover-placeholder { position: absolute; inset: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px; border: 1px solid #cfc5b7; }
+.building-cover-placeholder::before { content: ''; width: 40px; height: 56px; border: 1px solid #a73e32; opacity: .7; }
+.building-cover-placeholder span { font-size: 10px; letter-spacing: .14em; }
+.building-cover-placeholder strong { color: #273b3d; font: 600 18px 'Noto Serif SC', serif; }
+.card-category { color: #a73e32; font-size: 11px; letter-spacing: .08em; margin-top: 7px; }
+.building-body h3 + .card-category + p { margin-top: 10px; }
+.cover-label { display: none; }
+.detail-cover { min-height: 360px; border-bottom: 1px solid #cfc5b7; background: #e7e2d9; color: #1f3435; box-shadow: none; }
+.detail-cover[class*="cover-"] { background: #e7e2d9; }
+.detail-cover::before, .detail-cover::after { display: none; }
+.detail-cover .container { min-height: 360px; }
+.detail-cover-copy { border-left: 3px solid #a73e32; padding-left: 22px; }
+.detail-cover .eyebrow { color: #a73e32 !important; }
+.detail-cover-status { display: block; margin: 13px 0 12px; color: #7c8782; font-size: 10px; letter-spacing: .14em; }
+.detail-cover h1 { color: #1f3435; text-shadow: none; }
+.detail-cover .pinyin, .detail-cover .detail-meta { color: #68736f; }
+.source-card { background: #eee9df; box-shadow: none; }
+.site-footer { background: #27383b; }
+.site-footer::before { display: none; }
+@media (min-width: 821px) { .hero-copy h1 span { white-space: nowrap; } }
+@media (max-width: 820px) { .hero-copy h1 span { white-space: normal; } }
+.tower-silhouette { display: block; width: 70px; height: 112px; position: relative; border: 1px solid currentColor; border-bottom: 0; opacity: .6; }
+.tower-silhouette::before, .tower-silhouette::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border: 1px solid currentColor; }
+.tower-silhouette::before { bottom: 0; width: 92px; height: 7px; border-bottom: 0; }
+.tower-silhouette::after { top: -10px; width: 34px; height: 10px; border-bottom: 0; }
+.building-cover-placeholder .tower-silhouette { margin-top: -3px; }
+.building-cover.yingxian-wooden-pagoda .tower-silhouette, .city-card-art.yingxian-wooden-pagoda .tower-silhouette { width: 76px; height: 96px; border-color: #8b5b3f; transform: perspective(90px) rotateY(-8deg); }
+.building-cover.yingxian-wooden-pagoda .tower-silhouette::before, .city-card-art.yingxian-wooden-pagoda .tower-silhouette::before { width: 92px; border-color: #8b5b3f; }
+.building-cover.yingxian-wooden-pagoda .tower-silhouette::after, .city-card-art.yingxian-wooden-pagoda .tower-silhouette::after { width: 54px; border-color: #8b5b3f; }
+.building-cover.xian-big-wild-goose-pagoda .tower-silhouette, .city-card-art.xian-big-wild-goose-pagoda .tower-silhouette { width: 62px; height: 118px; border-color: #9a876c; }
+.building-cover.xian-big-wild-goose-pagoda .tower-silhouette::before, .city-card-art.xian-big-wild-goose-pagoda .tower-silhouette::before { width: 78px; border-color: #9a876c; }
+.building-cover.xian-big-wild-goose-pagoda .tower-silhouette::after, .city-card-art.xian-big-wild-goose-pagoda .tower-silhouette::after { width: 28px; border-color: #9a876c; }
+.building-cover.kaifeng-iron-pagoda .tower-silhouette, .city-card-art.kaifeng-iron-pagoda .tower-silhouette { width: 38px; height: 132px; border-color: #87624c; }
+.building-cover.kaifeng-iron-pagoda .tower-silhouette::before, .city-card-art.kaifeng-iron-pagoda .tower-silhouette::before { width: 64px; border-color: #87624c; }
+.building-cover.kaifeng-iron-pagoda .tower-silhouette::after, .city-card-art.kaifeng-iron-pagoda .tower-silhouette::after { width: 20px; border-color: #87624c; }
+.detail-cover.yingxian-wooden-pagoda { background: #e8dfd3; }
+.detail-cover.xian-big-wild-goose-pagoda { background: #e5e0d6; }
+.detail-cover.kaifeng-iron-pagoda { background: #e2d8ca; }

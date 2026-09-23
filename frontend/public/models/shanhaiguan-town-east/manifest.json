@@ -1,0 +1,25 @@
+{
+  "modelId": "shanhaiguan-town-east",
+  "version": "0.2.0-reconstruction",
+  "versionStatus": "TECHNICAL_REVIEW",
+  "assetStatus": "资料复原样板 · 待授权实测扫描",
+  "source": "ARCHIVA 项目自建形制复原，依据公开城防资料与页面比例参数制作，不代表现场测绘",
+  "license": "项目自有技术样板；正式出版前需替换为已授权实测或摄影测量资产，并保留作者与来源记录",
+  "lod": [
+    { "level": "low", "url": "/models/shanhaiguan-town-east/model-low.glb" },
+    { "level": "medium", "url": "/models/shanhaiguan-town-east/model-medium.glb" },
+    { "level": "high", "url": "/models/shanhaiguan-town-east/model-high.glb" }
+  ],
+  "textures": { "format": "embedded-materials", "basePath": "/models/shanhaiguan-town-east/", "variants": { "mobile": "low", "desktop": "medium", "detail": "high" } },
+  "defaultCamera": { "position": [11, 7, 13], "target": [0, 2.5, 0], "fov": 34 },
+  "hotspots": [
+    { "id": "overview", "title": "关城形制", "position": [0, 4.2, 0], "content": "镇东楼位于关城中轴，城台、城楼与东西防线构成层层防御。" },
+    { "id": "portal", "title": "三道关门", "position": [0, 1.9, 0.8], "content": "三道门洞与厚重城台形成关城的通行和防守节点。" },
+    { "id": "battlement", "title": "城墙垛口", "position": [0, 1.9, -3.5], "content": "前方城墙和垛口表现山海关连接长城防线的空间关系。" }
+  ],
+  "components": [
+    { "id": "tower", "name": "镇东楼", "nodeName": "TownEast_TowerBody", "parentId": null },
+    { "id": "portals", "name": "三道关门", "nodeName": "Portal_0_Opening", "parentId": "tower" },
+    { "id": "approach", "name": "东侧城墙与垛口", "nodeName": "Eastern_Approach_Wall", "parentId": null }
+  ]
+}

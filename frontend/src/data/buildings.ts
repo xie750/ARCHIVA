@@ -177,7 +177,7 @@ export const buildings: Building[] = [
     scenic: {
       title: '应县木塔 · 辽代木构数字现场',
       subtitle: '从塔身比例进入斗拱、暗层与木构节点，观察一座千年木塔如何站立。',
-      points: [{ id: 'yingxian-main', name: '佛宫寺释迦塔', subtitle: '辽代五层木构塔', description: '塔身明暗层和逐层收分构成木塔的核心形制，适合从结构轴线与构件细部两种尺度阅读。', position: [50, 50], coordinates: [113.1753, 39.5592], modelKind: 'pagoda', status: '重点展项' }],
+      points: [{ id: 'yingxian-main', name: '佛宫寺释迦塔', subtitle: '辽代五层木构塔', description: '塔身明暗层和逐层收分构成木塔的核心形制，适合从结构轴线与构件细部两种尺度阅读。', position: [50, 50], coordinates: [113.1753, 39.5592], modelKind: 'pagoda', status: '重点展项', useParentModel: true }],
     },
     status: '持续研究',
     model: { kind: 'pagoda', version: '0.1.0-reconstruction', precision: '形制复原 · 待接入授权扫描', nodes: 96, source: '依据公开测绘与建筑史资料制作的展示样板', license: '正式出版需替换为已授权实测资产' },
@@ -203,7 +203,7 @@ export const buildings: Building[] = [
     scenic: {
       title: '大雁塔 · 长安译经中轴数字现场',
       subtitle: '把塔身、寺院中轴与长安城南的历史地理放在同一个空间里阅读。',
-      points: [{ id: 'xian-big-wild-goose-main', name: '大雁塔本体', subtitle: '唐代七层砖塔', description: '进入单体模型观察砖塔层级、券门和仿木构檐口，并理解它与大慈恩寺中轴的关系。', position: [50, 50], coordinates: [108.9641, 34.2188], modelKind: 'pagoda', status: '重点展项' }],
+      points: [{ id: 'xian-big-wild-goose-main', name: '大雁塔本体', subtitle: '唐代七层砖塔', description: '进入单体模型观察砖塔层级、券门和仿木构檐口，并理解它与大慈恩寺中轴的关系。', position: [50, 50], coordinates: [108.9641, 34.2188], modelKind: 'pagoda', status: '重点展项', useParentModel: true }],
     },
     status: '持续研究',
     model: { kind: 'pagoda', version: '0.1.0-reconstruction', precision: '形制复原 · 待接入授权扫描', nodes: 84, source: '依据公开测绘与建筑史资料制作的展示样板', license: '正式出版需替换为已授权实测资产' },
@@ -229,10 +229,10 @@ export const buildings: Building[] = [
     scenic: {
       title: '山海关 · 镇东楼与关城防线数字现场',
       subtitle: '沿城门轴线观察箭窗、城台、瓮城和长城连接方式，读懂“关”的空间层次。',
-      points: [{ id: 'shanhaiguan-town-east', name: '镇东楼', subtitle: '天下第一关城楼', description: '镇东楼居关城中轴，前接瓮城、后连长城；模型重点展示城台、箭窗与重檐城楼。', position: [50, 50], coordinates: [119.7754, 40.0041], modelKind: 'gate', status: '重点展项' }],
+      points: [{ id: 'shanhaiguan-town-east', name: '镇东楼', subtitle: '天下第一关城楼', description: '镇东楼居关城中轴，前接瓮城、后连长城；模型重点展示城台、箭窗与重檐城楼。', position: [50, 50], coordinates: [119.7754, 40.0041], modelKind: 'gate', useParentModel: true, status: '重点展项' }],
     },
     status: '持续研究',
-    model: { kind: 'gate', version: '0.1.0-reconstruction', precision: '关城形制复原 · 待接入授权扫描', nodes: 118, source: '依据公开城防测绘与建筑史资料制作的展示样板', license: '正式出版需替换为已授权实测资产' },
+    model: { kind: 'gate', version: '0.2.0-reconstruction', precision: '关城形制复原 · 本地 GLB 样板', nodes: 150, manifestUrl: '/models/shanhaiguan-town-east/manifest.json', source: 'ARCHIVA 项目自建复原 GLB；依据公开城防资料与比例参数制作，不代表现场测绘', license: '项目自有技术样板；正式出版需替换为已授权实测资产' },
   },
   {
     id: 'qufu-confucius-temple',
