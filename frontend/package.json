@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "generate:pagoda-assets": "node scripts/generate-kaifeng-pagoda-assets.mjs",
-    "generate:shanhaiguan-gate-assets": "node scripts/generate-shanhaiguan-gate-assets.mjs"
+    "generate:shanhaiguan-gate-assets": "node scripts/generate-shanhaiguan-gate-assets.mjs",
+    "generate:pagoda-reconstruction-assets": "node scripts/generate-pagoda-reconstruction-assets.mjs",
+    "generate:yellow-crane-tower-assets": "node scripts/generate-yellow-crane-tower-assets.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.1",

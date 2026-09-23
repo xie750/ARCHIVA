@@ -61,11 +61,7 @@ function chooseLod(manifest: BrowserModelManifest, preferDetail = false): { url:
   const variants = manifest.textures?.variants
   const desktop = assets.find((asset) => asset.level === variants?.desktop) ?? medium
   const detail = assets.find((asset) => asset.level === variants?.detail)
-  // On a wide desktop viewport the visitor is usually looking at the model
-  // full-screen, so prefer the authored detail LOD when it is available.
-  // Keep low-memory and constrained connections on the smaller contract.
-  const wideViewport = typeof window !== 'undefined' && window.innerWidth >= 1280
-  const level = lowBandwidth || memory <= 2 ? coarse : preferDetail && detail ? detail : wideViewport && detail ? detail : desktop
+  const level = lowBandwidth || memory <= 2 ? coarse : preferDetail && detail ? detail : desktop
   return { url: level.url, level: level.level ?? 'default' }
 }
 

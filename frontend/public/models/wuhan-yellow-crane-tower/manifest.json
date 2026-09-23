@@ -1,0 +1,36 @@
+{
+  "modelId": "wuhan-yellow-crane-tower",
+  "version": "0.3.0-reconstruction",
+  "versionStatus": "TECHNICAL_REVIEW",
+  "assetStatus": "本地资料复原 GLB 样板",
+  "source": "ARCHIVA 项目自建资料复原（基于公开形制资料与比例参数，不代表现场测绘）",
+  "license": "项目自有技术样板；正式出版如需实测精度，应替换为已授权扫描或摄影测量资产",
+  "lod": [
+    { "level": "low", "url": "/models/wuhan-yellow-crane-tower/model-low.glb", "bytes": 593076 },
+    { "level": "medium", "url": "/models/wuhan-yellow-crane-tower/model-medium.glb", "bytes": 935492 },
+    { "level": "high", "url": "/models/wuhan-yellow-crane-tower/model-high.glb", "bytes": 1719680 }
+  ],
+  "textures": {
+    "format": "embedded-materials",
+    "basePath": "/models/wuhan-yellow-crane-tower/",
+    "variants": { "mobile": "low", "desktop": "medium", "detail": "high" }
+  },
+  "defaultCamera": {
+    "position": [10.4, 6.7, 13.8],
+    "target": [0, 2.8, 0],
+    "fov": 34
+  },
+  "hotspots": [
+    { "id": "overview", "title": "五层主楼", "position": [0, 3.2, 0], "content": "宽台基、红柱廊与逐层收分形成黄鹤楼主楼的总体体量。" },
+    { "id": "eaves", "title": "黄瓦重檐", "position": [1.8, 4.7, -1.2], "content": "黄色琉璃瓦、起翘檐角、屋脊和瓦垄共同构成最主要的轮廓识别。" },
+    { "id": "bracket", "title": "柱廊斗拱", "position": [-1.5, 3.6, -1.1], "content": "青绿色斗拱带、红柱和浅色墙面把模型从塔状几何拉回楼阁语汇。" },
+    { "id": "river", "title": "临江关系", "position": [0, 0.4, 4.2], "content": "模型保留长江方向的水面语境，帮助理解蛇山、楼阁与城市视线的关系。" }
+  ],
+  "components": [
+    { "id": "body", "name": "五层主楼", "nodeName": "Building_Main", "parentId": null },
+    { "id": "floor-01", "name": "一层层台", "nodeName": "Floor_01", "parentId": "body" },
+    { "id": "eaves", "name": "层叠飞檐", "nodeName": "Floor_1_Hip_Roof", "parentId": "body" },
+    { "id": "deck", "name": "观江栏杆", "nodeName": "Viewing_Deck_Front_Rail", "parentId": "body" },
+    { "id": "context", "name": "长江方向语境", "nodeName": "Yangtze_River_Context", "parentId": null }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "modelId": "yingxian-wooden-pagoda",
+  "version": "0.2.0-reconstruction",
+  "versionStatus": "TECHNICAL_REVIEW",
+  "assetStatus": "资料复原样板 · 待授权实测扫描",
+  "source": "ARCHIVA 项目自建资料复原（基于公开形制资料与比例参数，不代表现场测绘）",
+  "license": "项目自有技术样板；替换为授权实测资产后再用于正式出版",
+  "lod": [
+    { "level": "low", "url": "/models/yingxian-wooden-pagoda/model-low.glb", "bytes": 118276 },
+    { "level": "medium", "url": "/models/yingxian-wooden-pagoda/model-medium.glb", "bytes": 154444 },
+    { "level": "high", "url": "/models/yingxian-wooden-pagoda/model-high.glb", "bytes": 182192 }
+  ],
+  "textures": {
+    "format": "embedded-materials",
+    "basePath": "/models/yingxian-wooden-pagoda/",
+    "variants": { "mobile": "low", "desktop": "medium", "detail": "high" }
+  },
+  "defaultCamera": {
+    "position": [10, 7.5, 12.5],
+    "target": [0, 3.6, 0],
+    "fov": 34
+  },
+  "hotspots": [
+    { "id": "overview", "title": "五层木构塔身", "position": [0, 3.8, 0], "content": "五层明层、逐层收分与中心塔心柱共同构成木塔的主体形制。" },
+    { "id": "brackets", "title": "斗拱与檐口", "position": [1.6, 4.6, -1.4], "content": "檐口、柱网和简化斗拱块表现辽代木构楼阁式塔的结构节奏。" },
+    { "id": "timber", "title": "木构材料表达", "position": [-1.4, 2.6, 1.3], "content": "当前为资料复原材质，用暖木色和深色窗洞区分承重构件与内部空间。" }
+  ],
+  "components": [
+    { "id": "body", "name": "五层木构塔身", "nodeName": "Building_Main", "parentId": null },
+    { "id": "floor-01", "name": "第一层", "nodeName": "Floor_01", "parentId": "body" },
+    { "id": "eaves", "name": "檐口与斗拱表达", "nodeName": "Eave_Band", "parentId": "body" },
+    { "id": "shaft", "name": "中心塔心柱", "nodeName": "Central_Shaft", "parentId": "body" }
+  ]
+}

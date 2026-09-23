@@ -526,3 +526,116 @@ body { background: var(--paper, #f6f1e8); background-image: none; }
 .detail-cover.yingxian-wooden-pagoda { background: #e8dfd3; }
 .detail-cover.xian-big-wild-goose-pagoda { background: #e5e0d6; }
 .detail-cover.kaifeng-iron-pagoda { background: #e2d8ca; }
+
+.hero-image,
+.feature-card-image img,
+.building-cover-img,
+.city-card-img,
+.detail-cover-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-image { z-index: 0; }
+.hero-art::before {
+  display: block;
+  z-index: 1;
+  background: rgba(18, 34, 36, .2);
+  pointer-events: none;
+}
+.hero-art::after,
+.hero-art-label,
+.hero-placeholder {
+  z-index: 2;
+}
+.hero-art-label,
+.hero-art-label span,
+.hero-art::after {
+  color: rgba(255, 248, 235, .9);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, .36);
+}
+.feature-card-image {
+  position: relative;
+  min-height: 250px;
+  overflow: hidden;
+  border-bottom: 1px solid #cfc5b7;
+  background: #ded7cb;
+}
+.feature-card-image::after,
+.building-cover::after,
+.city-card-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  display: block;
+  z-index: 1;
+  background: rgba(15, 24, 25, .12);
+  pointer-events: none;
+}
+.feature-card-placeholder,
+.city-card-art > span:not(.image-credit),
+.city-card-art .tower-silhouette {
+  position: relative;
+  z-index: 2;
+}
+.building-cover-img,
+.city-card-img {
+  z-index: 0;
+}
+.building-cover-placeholder {
+  z-index: 2;
+}
+.image-credit {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  z-index: 2;
+  max-width: calc(100% - 20px);
+  padding: 3px 6px;
+  color: rgba(255, 248, 235, .9);
+  background: rgba(18, 31, 32, .56);
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detail-cover::before {
+  display: block;
+  z-index: 1;
+  background: rgba(11, 22, 24, .42);
+  pointer-events: none;
+}
+.detail-cover-image {
+  z-index: 0;
+}
+.detail-cover .container {
+  z-index: 2;
+}
+.detail-cover-copy {
+  border-left-color: #d8b36f;
+}
+.detail-cover .eyebrow,
+.detail-cover-status,
+.detail-cover h1,
+.detail-cover .pinyin,
+.detail-cover .detail-meta {
+  color: #fff8ec !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .36);
+}
+.detail-image-credit {
+  position: absolute;
+  right: max(16px, calc((100vw - 1180px) / 2));
+  bottom: 16px;
+  z-index: 3;
+  max-width: min(420px, calc(100% - 32px));
+  color: rgba(255, 248, 235, .84);
+  background: rgba(18, 31, 32, .58);
+  padding: 5px 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  text-decoration: none;
+}

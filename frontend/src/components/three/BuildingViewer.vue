@@ -487,7 +487,7 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
 
 async function loadReviewedAsset(scene: THREE.Scene, fallback: THREE.Group, rendererInstance: THREE.WebGLRenderer, environment: THREE.Group, particles: THREE.Points) {
   if ((!props.assetUrl && !props.manifestUrl) || props.assetUrl?.includes('cdn.example.com')) {
-    modelStatus.value = '形制示意 · 待接入授权 GLB'
+    modelStatus.value = '形制示意 · 未配置 GLB 资产'
     return
   }
 
@@ -505,7 +505,7 @@ async function loadReviewedAsset(scene: THREE.Scene, fallback: THREE.Group, rend
       dracoDecoderPath: '/draco/',
       ktx2TranscoderPath: '/basis/',
       signal: controller.signal,
-      preferDetail: isPagodaShowcase.value,
+      preferDetail: false,
       onProgress: (progress) => { loadProgress.value = Math.round(progress * 100) },
     })
     if (!asset || controller.signal.aborted) return
@@ -542,8 +542,9 @@ async function loadReviewedAsset(scene: THREE.Scene, fallback: THREE.Group, rend
     fallback.visible = false
     environment.children.slice(1).forEach((child) => { child.visible = false })
     particles.visible = false
-    scene.background = new THREE.Color(isPagodaShowcase.value ? '#1a2527' : props.kind === 'gate' ? '#24191a' : '#b9ad9a')
-    scene.fog = new THREE.Fog(isPagodaShowcase.value ? '#1a2527' : props.kind === 'gate' ? '#24191a' : '#b9ad9a', isPagodaShowcase.value || props.kind === 'gate' ? 32 : 24, 70)
+    const loadedStageColor = isPagodaShowcase.value ? '#1a2527' : props.kind === 'gate' ? '#24191a' : props.kind === 'pavilion' ? '#10242b' : '#b9ad9a'
+    scene.background = new THREE.Color(loadedStageColor)
+    scene.fog = new THREE.Fog(loadedStageColor, isPagodaShowcase.value || props.kind === 'gate' || props.kind === 'pavilion' ? 32 : 24, 70)
     modelStatus.value = `${asset.manifest?.assetStatus ?? 'GLB 资产'} · ${asset.lod.toUpperCase()} 已载入`
     scanEnabled.value = false
     if (scanMaterial) scanMaterial.opacity = 0
@@ -847,5 +848,17 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 .preset-menu { display: grid; gap: 4px; padding: 5px; border: 1px solid rgba(115, 198, 197, .24); background: rgba(4, 19, 24, .9); }
 .preset-menu button { min-width: 92px; border: 0; padding: 6px 7px; color: #a9c9c4; background: rgba(28, 57, 60, .56); font-size: 9px; text-align: left; }
 .preset-menu button:hover { color: #f0ddbd; background: rgba(70, 47, 30, .58); }
-@media (max-width: 540px) { .hud-hotspot, .hud-help { display: none; } .viewer-toolbar { top: 65px; right: 10px; } .hud-head { left: 14px; right: 14px; } .hud-bottom { left: 14px; right: 14px; } }
+@media (max-width: 540px) {
+  .hud-hotspot, .hud-help { display: none; }
+  .hud-head { left: 14px; right: 14px; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .hud-head strong { max-width: min(260px, 74vw); line-height: 1.45; }
+  .live-pill { max-width: 168px; padding: 4px 6px; line-height: 1.35; }
+  .viewer-toolbar { top: auto; right: 10px; left: 10px; bottom: 68px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .viewer-toolbar button { min-width: 0; justify-content: center; gap: 3px; padding: 5px 3px; font-size: 8px; background: rgba(4, 19, 24, .54); }
+  .viewer-toolbar button span { font-size: 11px; }
+  .preset-menu { grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .preset-menu button { min-width: 0; justify-content: center; text-align: center; }
+  .hud-bottom { left: 14px; right: 14px; bottom: 14px; justify-content: center; text-align: center; }
+  .hud-status { max-width: 100%; padding: 4px 6px; background: rgba(4, 19, 24, .48); }
+}
 </style>

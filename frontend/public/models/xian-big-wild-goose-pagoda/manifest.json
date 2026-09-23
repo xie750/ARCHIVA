@@ -1,0 +1,34 @@
+{
+  "modelId": "xian-big-wild-goose-pagoda",
+  "version": "0.2.0-reconstruction",
+  "versionStatus": "TECHNICAL_REVIEW",
+  "assetStatus": "资料复原样板 · 待授权实测扫描",
+  "source": "ARCHIVA 项目自建资料复原（基于公开形制资料与比例参数，不代表现场测绘）",
+  "license": "项目自有技术样板；替换为授权实测资产后再用于正式出版",
+  "lod": [
+    { "level": "low", "url": "/models/xian-big-wild-goose-pagoda/model-low.glb", "bytes": 121260 },
+    { "level": "medium", "url": "/models/xian-big-wild-goose-pagoda/model-medium.glb", "bytes": 134488 },
+    { "level": "high", "url": "/models/xian-big-wild-goose-pagoda/model-high.glb", "bytes": 166824 }
+  ],
+  "textures": {
+    "format": "embedded-materials",
+    "basePath": "/models/xian-big-wild-goose-pagoda/",
+    "variants": { "mobile": "low", "desktop": "medium", "detail": "high" }
+  },
+  "defaultCamera": {
+    "position": [10, 7.5, 12.5],
+    "target": [0, 3.6, 0],
+    "fov": 34
+  },
+  "hotspots": [
+    { "id": "overview", "title": "七层砖塔", "position": [0, 3.6, 0], "content": "七层砖塔逐层收分，形成大雁塔稳定、克制的唐代塔身比例。" },
+    { "id": "door", "title": "券门节点", "position": [0, 2.2, -1.7], "content": "每层正面券门帮助阅读砖塔的层级、朝向与仿木构檐口关系。" },
+    { "id": "eave", "title": "层级檐口", "position": [1.35, 4.8, -1.1], "content": "浅檐和砖色变化强调塔身层级，便于在远景和近景之间切换观察。" }
+  ],
+  "components": [
+    { "id": "body", "name": "七层砖塔塔身", "nodeName": "Building_Main", "parentId": null },
+    { "id": "floor-01", "name": "第一层", "nodeName": "Floor_01", "parentId": "body" },
+    { "id": "door", "name": "券门节点", "nodeName": "Arched_Door_Frame", "parentId": "body" },
+    { "id": "eaves", "name": "层级檐口", "nodeName": "Eave_Band", "parentId": "body" }
+  ]
+}

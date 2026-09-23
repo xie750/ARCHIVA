@@ -16,13 +16,13 @@ const regionGroups = computed(() => Array.from(new Set(buildings.map((building) 
         <div class="hero-actions"><RouterLink to="/explore" class="button-primary">开始探索 <ArrowRight :size="16" /></RouterLink><a href="#featured" class="button-ghost">查看策展精选</a></div>
         <div class="hero-meta"><div><strong>{{ String(buildings.length).padStart(2, '0') }}</strong>已收录样本</div><div><strong>06</strong>周边省份扩展</div><div><strong>3D</strong>空间阅读</div></div>
       </div>
-      <div class="hero-art" aria-label="首发展章实景图待接入"><div class="hero-placeholder"><span class="hero-placeholder-kicker">HENAN / FIELD IMAGE</span><strong>实景图待接入</strong><small>授权建筑摄影将在素材确认后加入</small></div><div class="hero-art-label">首发展章 · 河南<br><span>CHAPTER 01 / HENAN</span></div></div>
+      <div class="hero-art" :aria-label="featuredBuilding.image?.alt ?? '首发展章实景图'"><img v-if="featuredBuilding.image" class="hero-image" :src="featuredBuilding.image.src" :alt="featuredBuilding.image.alt" :style="{ objectPosition: featuredBuilding.image.position ?? '50% 50%' }" /><div v-else class="hero-placeholder"><span class="hero-placeholder-kicker">HENAN / FIELD IMAGE</span><strong>实景图待接入</strong><small>授权建筑摄影将在素材确认后加入</small></div><div class="hero-art-label">首发展章 · 河南<br><span>CHAPTER 01 / HENAN</span></div></div>
     </section>
 
     <section id="featured" class="container">
       <div class="section-head"><div><span class="eyebrow">CURATED SELECTION</span><h2>一座建筑，一段可进入的历史</h2></div><RouterLink to="/explore" class="link-arrow">浏览全部样本 <ArrowRight :size="15" /></RouterLink></div>
       <div class="featured-grid">
-        <RouterLink :to="`/buildings/${featuredBuilding.id}`" class="feature-card"><div class="feature-card-placeholder" aria-label="建筑实景图待接入"><span>FEATURED / IMAGE PENDING</span><strong>建筑实景图待接入</strong></div><div class="feature-content"><span class="tagline">01 / 洛阳 · 世界遗产</span><h3>{{ featuredBuilding.name }}</h3><p>{{ featuredBuilding.summary }}</p></div></RouterLink>
+        <RouterLink :to="`/buildings/${featuredBuilding.id}`" class="feature-card"><div class="feature-card-image"><img v-if="featuredBuilding.image" :src="featuredBuilding.image.src" :alt="featuredBuilding.image.alt" :style="{ objectPosition: featuredBuilding.image.position ?? '50% 50%' }" /><div v-else class="feature-card-placeholder" aria-label="建筑实景图待接入"><span>FEATURED / IMAGE PENDING</span><strong>建筑实景图待接入</strong></div><span v-if="featuredBuilding.image" class="image-credit">{{ featuredBuilding.image.credit }}</span></div><div class="feature-content"><span class="tagline">01 / 洛阳 · 世界遗产</span><h3>{{ featuredBuilding.name }}</h3><p>{{ featuredBuilding.summary }}</p></div></RouterLink>
         <div class="mini-card"><div><span class="mini-index">02</span><h3>从地图进入中国</h3><p>从河南首发样本出发，现已加入山西、陕西、河北、山东、安徽和湖北的代表性建筑。</p></div><RouterLink to="/explore" class="link-arrow">打开建筑地图 <MapPin :size="15" /></RouterLink></div>
       </div>
     </section>

@@ -11,6 +11,15 @@ export interface BuildingSource {
   kind: '官方资料' | '研究资料' | '项目记录'
 }
 
+export interface BuildingImage {
+  src: string
+  alt: string
+  credit: string
+  license: string
+  sourceUrl: string
+  position?: string
+}
+
 export interface ScenicPoint {
   id: string
   name: string
@@ -45,6 +54,7 @@ export interface Building {
   summary: string
   story: string
   coverClass: string
+  image?: BuildingImage
   accent: string
   metrics: BuildingMetric[]
   tags: string[]
