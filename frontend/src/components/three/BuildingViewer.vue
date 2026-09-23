@@ -7,15 +7,23 @@ import { applyProceduralHeritageMaterials, disposeProceduralMaterialCache } from
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 const props = withDefaults(defineProps<{
-  kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden' | 'street'
+  kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'pavilion' | 'garden' | 'street'
+  variant?: string
   /** A reviewed GLB URL. The procedural scene remains the explicit fallback. */
   assetUrl?: string
   /** Endpoint returning a ModelManifest with a lod[] array. */
   manifestUrl?: string
   /** Official third-party viewer embed. Used when the source does not allow GLB redistribution. */
   embedUrl?: string
-}>(), { assetUrl: undefined, manifestUrl: undefined })
-const isPagodaShowcase = computed(() => props.kind === 'pagoda' && Boolean(props.manifestUrl || props.assetUrl))
+  /** Landmark name shown in the viewer HUD so every city has a clear 3D identity. */
+  title?: string
+}>(), { assetUrl: undefined, manifestUrl: undefined, variant: undefined })
+// Every pagoda is a hero landmark in the atlas, whether it is backed by a
+// reviewed GLB or by the procedural reconstruction.  Keeping the showcase
+// treatment for both paths makes the five-storey timber tower and the
+// seven-storey brick tower feel intentional instead of falling back to the
+// generic scene palette while the project is still collecting scans.
+const isPagodaShowcase = computed(() => props.kind === 'pagoda')
 const mount = ref<HTMLDivElement | null>(null)
 const autoRotate = ref(true)
 const wireframe = ref(false)
@@ -36,7 +44,8 @@ const assetBadge = computed(() => {
   if (loadedRealAsset.value) return assetManifest.value?.versionStatus === 'PUBLISHED' ? 'REVIEWED GLB' : 'RECONSTRUCTION GLB'
   return hasReviewedAsset.value ? 'GLB READY' : 'CONCEPT MODEL'
 })
-const modelLabel = computed(() => ({ grotto: '石窟群 · 空间扫描', temple: '寺院轴线 · 空间扫描', gate: '城门遗址 · 形制复原', pagoda: '楼阁古塔 · 构件扫描', garden: '宋式园林 · 场景复原', street: '宋代街市 · 场景复原' }[props.kind]))
+const modelLabel = computed(() => ({ grotto: '石窟群 · 空间扫描', temple: '寺院轴线 · 形制复原', gate: '城门遗址 · 形制复原', pagoda: '楼阁古塔 · 构件扫描', pavilion: '临江名楼 · 形制复原', garden: '宋式园林 · 场景复原', street: '宋代街市 · 场景复原' }[props.kind]))
+const displayLabel = computed(() => props.title ? `${props.title} · ${modelLabel.value}` : modelLabel.value)
 type CameraPreset = 'overview' | 'detail' | 'axis' | 'top'
 type Hotspot = { id: string; label: string; description: string; placement: string; preset: CameraPreset }
 const hotspots = computed<Hotspot[]>(() => [
@@ -78,6 +87,35 @@ function registerMaterial(material: THREE.Material) { if (!trackedMaterials.incl
 function setMeshProps(mesh: THREE.Mesh) { mesh.castShadow = true; mesh.receiveShadow = true; if (Array.isArray(mesh.material)) mesh.material.forEach(registerMaterial); else registerMaterial(mesh.material); return mesh }
 function addBox(group: THREE.Group, size: [number, number, number], position: [number, number, number], material: THREE.Material) { const mesh = setMeshProps(new THREE.Mesh(new THREE.BoxGeometry(...size), material)); mesh.position.set(...position); group.add(mesh); return mesh }
 function addRoof(group: THREE.Group, radius: number, height: number, y: number, material: THREE.Material, rotation = Math.PI / 4, x = 0, z = 0) { const mesh = setMeshProps(new THREE.Mesh(new THREE.ConeGeometry(radius, height, 4), material)); mesh.rotation.y = rotation; mesh.position.set(x, y, z); group.add(mesh); return mesh }
+function addHipRoof(group: THREE.Group, width: number, depth: number, baseY: number, height: number, roofMaterial: THREE.Material, trimOrX: THREE.Material | number = roofMaterial, x = 0, z = 0) {
+  const trimMaterial = typeof trimOrX === 'number' ? roofMaterial : trimOrX
+  if (typeof trimOrX === 'number') { z = x; x = trimOrX }
+  const roofGroup = new THREE.Group()
+  roofGroup.position.set(x, 0, z)
+  group.add(roofGroup)
+  const roofWidth = width + 0.72
+  const roofDepth = depth + 0.7
+  const ridgeHalf = Math.max(0.58, width * 0.22)
+  const positions = new Float32Array([
+    -roofWidth / 2, baseY, -roofDepth / 2, roofWidth / 2, baseY, -roofDepth / 2,
+    roofWidth / 2, baseY, roofDepth / 2, -roofWidth / 2, baseY, roofDepth / 2,
+    -ridgeHalf, baseY + height, 0, ridgeHalf, baseY + height, 0,
+  ])
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  geometry.setIndex([0, 1, 5, 0, 5, 4, 3, 4, 5, 3, 5, 2, 1, 2, 5, 0, 3, 4])
+  geometry.computeVertexNormals()
+  roofGroup.add(setMeshProps(new THREE.Mesh(geometry, roofMaterial)))
+  addBox(roofGroup, [roofWidth + 0.18, 0.14, 0.17], [0, baseY - 0.04, -roofDepth / 2], trimMaterial)
+  addBox(roofGroup, [roofWidth + 0.18, 0.14, 0.17], [0, baseY - 0.04, roofDepth / 2], trimMaterial)
+  addBox(roofGroup, [ridgeHalf * 2 + 0.22, 0.14, 0.18], [0, baseY + height + 0.05, 0], trimMaterial)
+  for (const cornerX of [-roofWidth / 2, roofWidth / 2]) for (const cornerZ of [-roofDepth / 2, roofDepth / 2]) {
+    const tip = addBox(roofGroup, [0.14, 0.12, 0.62], [cornerX, baseY + 0.1, cornerZ], trimMaterial)
+    tip.rotation.x = cornerZ > 0 ? -0.24 : 0.24
+    tip.rotation.z = cornerX > 0 ? -0.08 : 0.08
+  }
+  return roofGroup
+}
 function addLine(group: THREE.Group, points: THREE.Vector3[], color: number, opacity = 0.45) { const geometry = new THREE.BufferGeometry().setFromPoints(points); const material = registerMaterial(new THREE.LineBasicMaterial({ color, transparent: true, opacity })) as THREE.LineBasicMaterial; const line = new THREE.Line(geometry, material); group.add(line); return line }
 function addTechRing(group: THREE.Group, radius: number, y: number, color: number, speed: number) { const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.56, side: THREE.DoubleSide }); registerMaterial(material); const ring = new THREE.Mesh(new THREE.RingGeometry(radius - 0.015, radius, 96), material); ring.rotation.x = -Math.PI / 2; ring.position.y = y; group.add(ring); animatedRings.push({ mesh: ring, speed, baseY: y }); return ring }
 function addFinials(group: THREE.Group, width: number, y: number, material: THREE.Material) { for (const x of [-width / 2, width / 2]) for (const z of [-width / 2, width / 2]) { const finial = setMeshProps(new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 6), material)); finial.position.set(x, y, z); group.add(finial) } }
@@ -117,10 +155,15 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
   scanMaterial = undefined
   const scene = new THREE.Scene()
   const pagodaShowcase = kind === 'pagoda'
+  const pavilionShowcase = kind === 'pavilion'
   const gateShowcase = kind === 'gate'
   const grottoShowcase = kind === 'grotto'
   const gardenShowcase = kind === 'garden'
   const streetShowcase = kind === 'street'
+  const shanhaiguanGate = gateShowcase && props.variant === 'shanhaiguan-town-east'
+  const qingmingGate = gateShowcase && props.variant === 'qingming-gate'
+  const qufuTemple = kind === 'temple' && props.variant === 'qufu-dacheng-hall'
+  const hongcunGarden = gardenShowcase && props.variant === 'hongcun-south-lake'
   const stage = pagodaShowcase
     ? { top: '#f3e6d1', bottom: '#161311', ground: '#292622', background: '#1a2527' }
     : gateShowcase
@@ -129,26 +172,28 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
         ? { top: '#d9d3c7', bottom: '#182027', ground: '#26262a', background: '#182128' }
         : gardenShowcase || streetShowcase
           ? { top: '#dce8d6', bottom: '#14211c', ground: '#20362d', background: '#172520' }
+          : kind === 'temple' || pavilionShowcase
+            ? { top: '#ead9bd', bottom: '#20262a', ground: '#2b2c29', background: '#121b20' }
           : { top: '#d9e8ed', bottom: '#05090d', ground: '#0b171d', background: '#07121b' }
   scene.background = new THREE.Color(stage.background)
-  scene.fog = new THREE.FogExp2(stage.background, gateShowcase || pagodaShowcase ? 0.018 : 0.026)
+  scene.fog = new THREE.FogExp2(stage.background, gateShowcase || pagodaShowcase || kind === 'temple' || pavilionShowcase ? 0.018 : 0.026)
   const cameraInstance = new THREE.PerspectiveCamera(34, 1, 0.1, 120)
   const cameraStart: Record<typeof props.kind, [number, number, number]> = {
-    grotto: [9.6, 5.5, 12.5], temple: [9.2, 5.9, 12.8], gate: [11, 7, 13], pagoda: [10, 7.5, 12.5], garden: [9.2, 6, 12.8], street: [10.5, 6.2, 13.6],
+    grotto: [9.6, 5.5, 12.5], temple: [9.2, 5.9, 12.8], gate: [11, 7, 13], pagoda: [10, 7.5, 12.5], pavilion: [10.4, 6.7, 13.8], garden: [9.2, 6, 12.8], street: [10.5, 6.2, 13.6],
   }
   const targetStart: Record<typeof props.kind, [number, number, number]> = {
-    grotto: [0, 2.25, 0], temple: [0, 1.8, 0], gate: [0, 2.5, 0], pagoda: [0, 3.6, 0], garden: [0, 1.6, 0], street: [0, 1.5, 0],
+    grotto: [0, 2.25, 0], temple: [0, 1.8, 0], gate: [0, 2.5, 0], pagoda: [0, 3.6, 0], pavilion: [0, 3.0, 0], garden: [0, 1.6, 0], street: [0, 1.5, 0],
   }
   cameraInstance.position.set(...cameraStart[kind]); camera = cameraInstance; initialCamera = cameraInstance.position.clone(); initialTarget = new THREE.Vector3(...targetStart[kind])
   scene.add(new THREE.HemisphereLight(stage.top, stage.bottom, pagodaShowcase || gateShowcase ? 1.9 : 1.65))
   // The pagoda is the hero asset. Use a warm key and a restrained cool rim so
   // the glazed-brick colors read like a physical object instead of a neon HUD.
-  const keyColor = gateShowcase ? '#ffd09a' : pagodaShowcase ? '#ffd7a0' : grottoShowcase ? '#e7c7aa' : gardenShowcase ? '#ffe8bf' : streetShowcase ? '#ffd7a0' : '#ffe2b6'
-  const key = new THREE.DirectionalLight(keyColor, pagodaShowcase ? 6.4 : gateShowcase ? 6 : grottoShowcase ? 5.2 : 4.8); key.position.set(8, 14, 7); key.castShadow = quality.shadows; key.shadow.mapSize.set(quality.shadows ? 768 : 256, quality.shadows ? 768 : 256); key.shadow.camera.near = 1; key.shadow.camera.far = 55; key.shadow.camera.left = -20; key.shadow.camera.right = 20; key.shadow.camera.top = 20; key.shadow.camera.bottom = -20; scene.add(key)
-  const rimColor = gateShowcase ? '#e5a988' : pagodaShowcase ? '#9bc4c2' : grottoShowcase ? '#8dc9ce' : gardenShowcase ? '#90d3b2' : streetShowcase ? '#d7a66f' : '#66c9d5'
-  const rim = new THREE.SpotLight(rimColor, pagodaShowcase || gateShowcase ? 8 : grottoShowcase ? 10 : 12, 38, Math.PI / 7, 0.7, 1.4); rim.position.set(-10, 9, -11); rim.target.position.set(0, 2, 0); scene.add(rim, rim.target)
-  const fillColor = gateShowcase ? '#d87950' : pagodaShowcase ? '#e9a66d' : grottoShowcase ? '#b76f4e' : gardenShowcase ? '#d59b58' : streetShowcase ? '#d87950' : '#db744b'
-  const warmFill = new THREE.PointLight(fillColor, pagodaShowcase || gateShowcase ? 3.8 : 2.6, 20); warmFill.position.set(3, 2.2, 4); scene.add(warmFill)
+  const keyColor = gateShowcase ? '#ffd09a' : pagodaShowcase ? '#ffd7a0' : pavilionShowcase ? '#ffe0a6' : grottoShowcase ? '#e7c7aa' : gardenShowcase ? '#ffe8bf' : streetShowcase ? '#ffd7a0' : kind === 'temple' ? '#f7d6a3' : '#ffe2b6'
+  const key = new THREE.DirectionalLight(keyColor, pagodaShowcase ? 6.4 : gateShowcase ? 6 : pavilionShowcase ? 6.2 : grottoShowcase ? 5.2 : kind === 'temple' ? 5.8 : 4.8); key.position.set(8, 14, 7); key.castShadow = quality.shadows; key.shadow.mapSize.set(quality.shadows ? 768 : 256, quality.shadows ? 768 : 256); key.shadow.camera.near = 1; key.shadow.camera.far = 55; key.shadow.camera.left = -20; key.shadow.camera.right = 20; key.shadow.camera.top = 20; key.shadow.camera.bottom = -20; scene.add(key)
+  const rimColor = gateShowcase ? '#e5a988' : pagodaShowcase ? '#9bc4c2' : pavilionShowcase ? '#9ac8d4' : grottoShowcase ? '#8dc9ce' : gardenShowcase ? '#90d3b2' : streetShowcase ? '#d7a66f' : kind === 'temple' ? '#8ec3ba' : '#66c9d5'
+  const rim = new THREE.SpotLight(rimColor, pagodaShowcase || gateShowcase || pavilionShowcase ? 8 : grottoShowcase ? 10 : kind === 'temple' ? 9 : 12, 38, Math.PI / 7, 0.7, 1.4); rim.position.set(-10, 9, -11); rim.target.position.set(0, 2, 0); scene.add(rim, rim.target)
+  const fillColor = gateShowcase ? '#d87950' : pagodaShowcase ? '#e9a66d' : pavilionShowcase ? '#d48b4f' : grottoShowcase ? '#b76f4e' : gardenShowcase ? '#d59b58' : streetShowcase ? '#d87950' : kind === 'temple' ? '#c88255' : '#db744b'
+  const warmFill = new THREE.PointLight(fillColor, pagodaShowcase || gateShowcase || pavilionShowcase ? 3.8 : kind === 'temple' ? 3.2 : 2.6, 20); warmFill.position.set(3, 2.2, 4); scene.add(warmFill)
   const environment = new THREE.Group()
   const groundMaterial = registerMaterial(new THREE.MeshStandardMaterial({ color: stage.ground, roughness: 0.88, metalness: 0.12 }))
   const ground = setMeshProps(new THREE.Mesh(new THREE.CircleGeometry(18, 96), groundMaterial)); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; environment.add(ground)
@@ -161,17 +206,43 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
   const particleGeometry = new THREE.BufferGeometry(); particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3)); const particles = new THREE.Points(particleGeometry, new THREE.PointsMaterial({ color: 0x78c7cc, size: 0.045, transparent: true, opacity: 0.52, depthWrite: false })); scene.add(particles)
   const group = new THREE.Group()
   const stone = registerMaterial(new THREE.MeshStandardMaterial({ color: kind === 'grotto' ? '#9c735e' : '#a87850', roughness: 0.68, metalness: 0.08 })); const stoneLight = registerMaterial(new THREE.MeshStandardMaterial({ color: '#cfaa7a', roughness: 0.6, metalness: 0.1 })); const dark = registerMaterial(new THREE.MeshStandardMaterial({ color: '#312b28', roughness: 0.77, metalness: 0.18 })); const red = registerMaterial(new THREE.MeshStandardMaterial({ color: '#8d2e2a', roughness: 0.65, metalness: 0.12 })); const gold = registerMaterial(new THREE.MeshStandardMaterial({ color: '#c69b5f', roughness: 0.42, metalness: 0.4 })); const cyan = registerMaterial(new THREE.MeshBasicMaterial({ color: 0x76e1e5, transparent: true, opacity: 0.8 }))
-  if (kind === 'pagoda') {
-    for (let i = 0; i < 9; i += 1) { const width = 3.65 - i * 0.24; const baseY = 0.32 + i * 0.78; addBox(group, [width, 0.54, width], [0, baseY, 0], i % 2 ? stone : dark); addBox(group, [width + 0.38, 0.1, width + 0.38], [0, baseY + 0.3, 0], gold); addRoof(group, width * 0.76, 0.58, baseY + 0.64, i % 2 ? gold : dark); addFinials(group, width + 0.22, baseY + 0.43, gold); for (const x of [-width * 0.42, width * 0.42]) for (const z of [-width * 0.42, width * 0.42]) addBox(group, [0.14, 0.38, 0.14], [x, baseY + 0.16, z], stoneLight) }
-    addBox(group, [0.72, 7.7, 0.72], [0, 3.5, 0], stoneLight); addBox(group, [0.15, 7.2, 0.15], [0, 3.65, 0], cyan)
+  if (kind === 'pavilion') {
+    // Yellow Crane Tower / riverside pavilion: a broad five-storey timber
+    // hall with projecting eaves, red columns and a distinct roof crown.
+    const pavilionWall = registerMaterial(new THREE.MeshStandardMaterial({ color: '#b64b32', roughness: 0.68, metalness: 0.04 }))
+    const pavilionTrim = registerMaterial(new THREE.MeshStandardMaterial({ color: '#e1a24e', roughness: 0.42, metalness: 0.22 }))
+    const pavilionRoof = registerMaterial(new THREE.MeshStandardMaterial({ color: '#51403a', roughness: 0.76, metalness: 0.14 }))
+    const pavilionShadow = registerMaterial(new THREE.MeshStandardMaterial({ color: '#281d1c', roughness: 0.86, metalness: 0 }))
+    for (let level = 0; level < 5; level += 1) {
+      const width = 4.65 - level * 0.18
+      const depth = 3.55 - level * 0.12
+      const y = 0.42 + level * 0.92
+      addBox(group, [width, 0.58, depth], [0, y, 0], pavilionWall)
+      addBox(group, [width + 0.58, 0.14, depth + 0.52], [0, y + 0.32, 0], pavilionTrim)
+      addHipRoof(group, width + 0.52, depth + 0.42, y + 0.4, 0.46, pavilionRoof, pavilionTrim, 0, 0)
+      for (const x of [-width * 0.4, width * 0.4]) for (const z of [-depth * 0.43, depth * 0.43]) addColumn(group, x, y + 0.02, z, 0.68, pavilionTrim, 0.095)
+      addBox(group, [width * 0.42, 0.3, 0.12], [0, y + 0.32, -depth * 0.48], pavilionShadow)
+    }
+    addBox(group, [1.1, 4.65, 1.1], [0, 2.5, 0], pavilionTrim)
+    addRoof(group, 2.2, 0.7, 5.15, pavilionRoof)
+    addFinials(group, 1.65, 5.54, pavilionTrim)
+  } else if (kind === 'pagoda') {
+    const pagodaLevels = props.variant === 'yingxian-wooden-pagoda' ? 5 : props.variant === 'xian-big-wild-goose-pagoda' ? 7 : 9
+    const levelStep = props.variant === 'yingxian-wooden-pagoda' ? 0.98 : props.variant === 'xian-big-wild-goose-pagoda' ? 0.9 : 0.78
+    const towerBody = props.variant === 'yingxian-wooden-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#70402c', roughness: 0.72, metalness: 0.04 })) : props.variant === 'xian-big-wild-goose-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#a98962', roughness: 0.8, metalness: 0.02 })) : stone
+    const towerRoof = props.variant === 'yingxian-wooden-pagoda' ? registerMaterial(new THREE.MeshStandardMaterial({ color: '#3b2521', roughness: 0.78, metalness: 0.08 })) : dark
+    for (let i = 0; i < pagodaLevels; i += 1) { const width = (props.variant === 'yingxian-wooden-pagoda' ? 4.05 : 3.65) - i * (props.variant === 'yingxian-wooden-pagoda' ? 0.38 : 0.24); const baseY = 0.32 + i * levelStep; addBox(group, [width, 0.54, width], [0, baseY, 0], i % 2 ? towerBody : towerRoof); addBox(group, [width + 0.38, 0.1, width + 0.38], [0, baseY + 0.3, 0], gold); addRoof(group, width * 0.76, 0.58, baseY + 0.64, i % 2 ? gold : towerRoof); addFinials(group, width + 0.22, baseY + 0.43, gold); for (const x of [-width * 0.42, width * 0.42]) for (const z of [-width * 0.42, width * 0.42]) addBox(group, [0.14, 0.38, 0.14], [x, baseY + 0.16, z], stoneLight); if (props.variant === 'xian-big-wild-goose-pagoda' && i < pagodaLevels - 1) addBox(group, [0.5, 0.26, 0.16], [0, baseY + 0.18, -width * 0.51], gold) }
+    const towerHeight = 0.72 + (pagodaLevels - 1) * levelStep + 0.64
+    addBox(group, [0.72, towerHeight, 0.72], [0, towerHeight / 2, 0], stoneLight)
+    addBox(group, [0.15, towerHeight - 0.5, 0.15], [0, towerHeight / 2, 0], cyan)
   } else if (kind === 'gate') {
     // Yingtiamen / gate profile: three readable passageways, a deep red
     // gatehouse, layered eaves and framed openings. This gives the fallback
     // the same architectural specificity as the pagoda showcase.
-    const wall = registerMaterial(new THREE.MeshStandardMaterial({ color: '#8d302b', roughness: 0.72, metalness: 0.05 }))
-    const wallLight = registerMaterial(new THREE.MeshStandardMaterial({ color: '#b04a38', roughness: 0.64, metalness: 0.05 }))
-    const roofDark = registerMaterial(new THREE.MeshStandardMaterial({ color: '#292225', roughness: 0.78, metalness: 0.12 }))
-    const roofEdge = registerMaterial(new THREE.MeshStandardMaterial({ color: '#c48a4d', roughness: 0.42, metalness: 0.3 }))
+    const wall = registerMaterial(new THREE.MeshStandardMaterial({ color: shanhaiguanGate ? '#806047' : qingmingGate ? '#8f4930' : '#8d302b', roughness: 0.72, metalness: 0.05 }))
+    const wallLight = registerMaterial(new THREE.MeshStandardMaterial({ color: shanhaiguanGate ? '#a68159' : qingmingGate ? '#bd7144' : '#b04a38', roughness: 0.64, metalness: 0.05 }))
+    const roofDark = registerMaterial(new THREE.MeshStandardMaterial({ color: shanhaiguanGate ? '#3b3935' : '#292225', roughness: 0.78, metalness: 0.12 }))
+    const roofEdge = registerMaterial(new THREE.MeshStandardMaterial({ color: shanhaiguanGate ? '#c49a5f' : qingmingGate ? '#d29a54' : '#c48a4d', roughness: 0.42, metalness: 0.3 }))
     const opening = registerMaterial(new THREE.MeshStandardMaterial({ color: '#150f12', roughness: 0.92, metalness: 0 }))
     addBox(group, [12.4, 0.3, 5.8], [0, 0.15, 0], dark)
     addBox(group, [11.8, 0.26, 6.7], [0, 0.42, 0], stoneLight)
@@ -217,6 +288,23 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
       addFinials(group, 1.55, 5.76, roofEdge)
     }
     for (const x of [-4.2, -1.4, 1.4, 4.2]) addBox(group, [0.22, 0.58, 0.34], [x, 5.65, 1.12], roofEdge)
+    if (shanhaiguanGate) {
+      // The eastern pass reads as a defensive gate rather than an imperial
+      // city wall: crenellations and a long stone approach make the mountain
+      // pass silhouette visible even in the overview frame.
+      const battlement = registerMaterial(new THREE.MeshStandardMaterial({ color: '#ad8e69', roughness: 0.82, metalness: 0.02 }))
+      addBox(group, [15.6, 1.15, 1.28], [0, 1.02, -3.35], battlement)
+      for (let x = -7.2; x <= 7.2; x += 1.8) addBox(group, [0.62, 0.56, 1.52], [x, 1.86, -3.35], battlement)
+      addBox(group, [3.8, 0.18, 8.2], [0, 0.38, -5.1], roofEdge)
+    } else if (qingmingGate) {
+      // The Song-market entrance is a lighter timber threshold with water
+      // immediately in front of it, separating it from the massive
+      // three-portal Yingtiamen reconstruction.
+      const water = registerMaterial(new THREE.MeshPhysicalMaterial({ color: '#285866', roughness: 0.16, metalness: 0.28, clearcoat: 0.65, transparent: true, opacity: 0.88 }))
+      const moat = setMeshProps(new THREE.Mesh(new THREE.BoxGeometry(9.4, 0.08, 1.8), water)); moat.position.set(0, 0.26, 4.65); group.add(moat)
+      addBox(group, [5.8, 0.2, 0.72], [0, 0.54, 3.55], roofEdge)
+      for (const x of [-2.2, -1.1, 0, 1.1, 2.2]) addColumn(group, x, 0.62, 3.2, 0.82, wallLight, 0.07)
+    }
   } else if (kind === 'grotto') {
     // Longmen-style cliff face: recessed niches and a staggered ledge make
     // the fallback read as carved rock instead of a row of floating spheres.
@@ -248,7 +336,7 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
     // A compact Song-style garden composition: pavilion, pond, bridge and
     // planting stones establish depth while keeping the draw count modest.
     addBox(group, [10.2, 0.24, 8.8], [0, 0.12, 0], dark)
-    const waterMaterial = registerMaterial(new THREE.MeshPhysicalMaterial({ color: '#23515a', roughness: 0.13, metalness: 0.4, clearcoat: 0.7, transparent: true, opacity: 0.9 }))
+    const waterMaterial = registerMaterial(new THREE.MeshPhysicalMaterial({ color: hongcunGarden ? '#2c6667' : '#23515a', roughness: 0.13, metalness: 0.4, clearcoat: 0.7, transparent: true, opacity: 0.9 }))
     const water = setMeshProps(new THREE.Mesh(new THREE.CircleGeometry(3.9, 48), waterMaterial)); water.rotation.x = -Math.PI / 2; water.position.set(0, 0.2, 2.55); group.add(water)
     // Pavilion on the far bank.
     addBox(group, [5.35, 0.28, 3.15], [0, 0.46, -1.55], stoneLight)
@@ -265,6 +353,17 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
       const rock = setMeshProps(new THREE.Mesh(new THREE.DodecahedronGeometry(scale, 1), stone)); rock.position.set(x, scale * 0.65, z); group.add(rock)
     }
     for (let i = -2; i <= 2; i += 1) { const lantern = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.42, 8), gold)); lantern.position.set(i * 1.25, 0.8, -3.45); group.add(lantern); addColumn(group, i * 1.25, 0.2, -3.45, 0.35, dark, 0.06) }
+    if (hongcunGarden) {
+      // Hongcun is defined by the white wall / dark-tile water village edge;
+      // add that continuous backdrop so it reads differently from the Song
+      // garden's open pavilion-and-bridge composition.
+      const whiteWall = registerMaterial(new THREE.MeshStandardMaterial({ color: '#d9d0ba', roughness: 0.88, metalness: 0.01 }))
+      const darkTile = registerMaterial(new THREE.MeshStandardMaterial({ color: '#2f3437', roughness: 0.86, metalness: 0.08 }))
+      addBox(group, [9.0, 2.35, 0.22], [0, 1.38, -4.18], whiteWall)
+      addBox(group, [9.3, 0.32, 0.46], [0, 2.62, -4.18], darkTile)
+      for (const x of [-3.4, -1.7, 0, 1.7, 3.4]) addBox(group, [0.16, 1.9, 0.28], [x, 1.4, -4.04], darkTile)
+      addBox(group, [1.2, 1.5, 0.26], [0, 1.36, -4.04], dark)
+    }
   } else if (kind === 'street') {
     // Street profile: two rows of low shopfronts around a pedestrian axis,
     // clearly different from both the pagoda and the temple courtyard.
@@ -290,30 +389,68 @@ function buildScene(kind: typeof props.kind, quality: ViewerQuality) {
       const lantern = setMeshProps(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.38, 8), gold)); lantern.position.set(0, 1.1, z); group.add(lantern)
     }
   } else {
-    // Temple profile: a courtyard axis with several low halls. Keeping this
-    // separate from the pagoda branch prevents every missing asset from
-    // falling back to a tower-like silhouette.
-    addBox(group, [10.4, 0.32, 9.2], [0, 0.16, 0], dark)
+    // Shaolin courtyard profile: tiled hip roofs, timber colonnades and a
+    // front mountain gate make the fallback read as a temple compound rather
+    // than three plain boxes with pyramid caps.
+    const plaster = registerMaterial(new THREE.MeshStandardMaterial({ color: qufuTemple ? '#c0a06d' : '#b89b73', roughness: 0.82, metalness: 0.02 }))
+    const timber = registerMaterial(new THREE.MeshStandardMaterial({ color: qufuTemple ? '#7e2f25' : '#6f2924', roughness: 0.7, metalness: 0.05 }))
+    const roofTile = registerMaterial(new THREE.MeshStandardMaterial({ color: qufuTemple ? '#34353a' : '#263b3d', roughness: 0.84, metalness: 0.1 }))
+    const roofTrim = registerMaterial(new THREE.MeshStandardMaterial({ color: qufuTemple ? '#c69a53' : '#b47a42', roughness: 0.48, metalness: 0.25 }))
+    const shadow = registerMaterial(new THREE.MeshStandardMaterial({ color: '#191e20', roughness: 0.9, metalness: 0 }))
+    addBox(group, [11.2, 0.26, 10.2], [0, 0.13, 0], dark)
+    addBox(group, [8.6, 0.16, 7.7], [0, 0.31, 0.35], stoneLight)
+
     const halls = [
-      { z: -3.05, width: 5.8, depth: 2.15, height: 2.25, roof: 3.55 },
-      { z: 0.05, width: 6.5, depth: 2.45, height: 2.55, roof: 3.95 },
-      { z: 3.0, width: 5.4, depth: 2.05, height: 2.15, roof: 3.35 },
+      { z: 3.0, width: 5.6, depth: 2.1, height: 2.15, roofWidth: 6.45, roofDepth: 2.95, roofY: 2.72 },
+      { z: 0.05, width: 6.65, depth: 2.45, height: 2.55, roofWidth: 7.6, roofDepth: 3.35, roofY: 3.08 },
+      { z: -3.05, width: 5.9, depth: 2.15, height: 2.2, roofWidth: 6.75, roofDepth: 2.95, roofY: 2.82 },
     ]
     halls.forEach((hall, index) => {
-      addBox(group, [hall.width, hall.height, hall.depth], [0, 1.25, hall.z], stone)
-      addRoof(group, hall.roof, 0.72, 2.72 + index * 0.05, gold)
-      addBox(group, [hall.width + 0.35, 0.14, hall.depth + 0.22], [0, 2.58 + index * 0.05, hall.z], gold)
-      for (const x of [-hall.width * 0.38, hall.width * 0.38]) addColumn(group, x, 0.34, hall.z - hall.depth * 0.51, hall.height + 0.18, red, 0.12)
-      addBox(group, [hall.width * 0.36, 1.2, 0.18], [0, 0.86, hall.z - hall.depth * 0.53], dark)
-      for (const x of [-hall.width * 0.22, hall.width * 0.22]) addWindow(group, x, 1.5, hall.z - hall.depth * 0.54, 0.55, 0.78, dark)
+      addBox(group, [hall.width, hall.height, hall.depth], [0, 1.42, hall.z], plaster)
+      // Deep shadow under the eave and a second trim band create the stacked
+      // roof profile visible in the overview camera.
+      addBox(group, [hall.roofWidth + 0.18, 0.18, hall.roofDepth + 0.18], [0, hall.roofY - 0.08, hall.z], roofTrim)
+      addHipRoof(group, hall.roofWidth, hall.roofDepth, hall.roofY, 0.72, roofTile, roofTrim, 0, hall.z)
+      addBox(group, [hall.roofWidth + 0.36, 0.11, hall.roofDepth + 0.34], [0, hall.roofY - 0.18, hall.z], roofTrim)
+      // Front colonnade, dark door bay, and repeated window frames.
+      // The overview camera starts on the positive-Z side of the compound.
+      // Put the veranda, doors and lattice on that face so the first frame
+      // shows architectural detail rather than the unadorned rear wall.
+      const frontZ = hall.z + hall.depth * 0.55
+      for (const x of [-hall.width * 0.42, 0, hall.width * 0.42]) addColumn(group, x, 0.34, frontZ, hall.height + 0.2, timber, 0.13)
+      addBox(group, [hall.width * 0.42, hall.height * 0.56, 0.12], [0, 1.35, frontZ - 0.04], shadow)
+      for (const x of [-hall.width * 0.22, hall.width * 0.22]) addWindow(group, x, 1.56, frontZ - 0.08, 0.62, 0.82, timber)
+      // Small bracket blocks under the eave read as dougong without creating
+      // hundreds of meshes.
+      for (const x of [-hall.roofWidth * 0.34, 0, hall.roofWidth * 0.34]) addBox(group, [0.42, 0.18, 0.42], [x, hall.roofY - 0.42, frontZ + 0.05], roofTrim)
+      // Front steps anchor each hall to the courtyard axis.
+      addBox(group, [hall.width * 0.44, 0.16, 0.52], [0, 0.42, frontZ - 0.38], stoneLight)
+      addBox(group, [hall.width * 0.34, 0.14, 0.36], [0, 0.57, frontZ - 0.6], stoneLight)
     })
-    // A simple mountain gate anchors the front of the axial sequence.
-    addBox(group, [7.6, 0.25, 0.35], [0, 2.95, -4.0], gold)
-    addColumn(group, -3.25, 0.33, -4.0, 2.55, red, 0.18); addColumn(group, 3.25, 0.33, -4.0, 2.55, red, 0.18)
-    addRoof(group, 4.25, 0.74, 3.14, gold, Math.PI / 4, 0, -4.0)
-    addBox(group, [8.8, 0.22, 0.28], [0, 2.95, -1.2], cyan)
-    addBox(group, [0.3, 2.2, 8.4], [-4.55, 1.2, 0], red)
-    addBox(group, [0.3, 2.2, 8.4], [4.55, 1.2, 0], red)
+
+    // Front mountain gate, with two red timber posts and a broad hip roof.
+    const gateZ = 4.45
+    addColumn(group, -3.1, 0.34, gateZ, 2.65, timber, 0.2)
+    addColumn(group, 3.1, 0.34, gateZ, 2.65, timber, 0.2)
+    addBox(group, [6.8, 0.22, 0.3], [0, 2.98, gateZ], roofTrim)
+    addHipRoof(group, 7.25, 1.95, 3.1, 0.7, roofTile, roofTrim, 0, gateZ)
+    addBox(group, [1.25, 1.28, 0.18], [0, 1.25, gateZ - 0.12], shadow)
+    for (const x of [-2.15, 2.15]) addBox(group, [0.36, 0.3, 0.42], [x, 2.82, gateZ], roofTrim)
+    // Low side corridors frame the courtyard while leaving the central axis open.
+    addBox(group, [0.35, 1.25, 7.2], [-4.7, 0.78, -0.2], timber)
+    addBox(group, [0.35, 1.25, 7.2], [4.7, 0.78, -0.2], timber)
+    for (const z of [-3.0, -1.2, 0.6, 2.4]) {
+      addBox(group, [0.18, 0.78, 0.18], [-4.45, 1.5, z], roofTrim)
+      addBox(group, [0.18, 0.78, 0.18], [4.45, 1.5, z], roofTrim)
+    }
+    if (qufuTemple) {
+      // Qufu's defining cue is the ceremonial forecourt: paired stone
+      // columns and a broad central stair in front of the main hall.
+      const stoneColumn = registerMaterial(new THREE.MeshStandardMaterial({ color: '#b7a27f', roughness: 0.68, metalness: 0.06 }))
+      for (const x of [-2.65, 2.65]) addColumn(group, x, 0.34, 4.05, 2.25, stoneColumn, 0.18)
+      addBox(group, [3.8, 0.18, 1.2], [0, 0.52, 3.62], stoneColumn)
+      addBox(group, [3.1, 0.16, 0.82], [0, 0.72, 3.18], stoneColumn)
+    }
   }
   group.rotation.y = -0.28; scene.add(group)
   const scanBeamGeometry = new THREE.PlaneGeometry(14, 0.06); scanMaterial = new THREE.MeshBasicMaterial({ color: 0x65e3e2, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }); const scanBeam = new THREE.Mesh(scanBeamGeometry, scanMaterial); scanBeam.rotation.x = -Math.PI / 2; scanBeam.position.y = 0.1; scene.add(scanBeam)
@@ -445,6 +582,7 @@ function cameraForPreset(preset: CameraPreset) {
     temple: { overview: { position: [9, 6.6, 11], target: [0, 2, 0] }, detail: { position: [4.5, 3.7, 7.4], target: [0, 2.2, -0.8] }, axis: { position: [0, 4.2, 12.8], target: [0, 2, 0] }, top: { position: [0, 12, 0.1], target: [0, 1.2, 0] } },
     gate: { overview: { position: [11, 7, 13], target: [0, 2.5, 0] }, detail: { position: [5.2, 3.8, 8.2], target: [0, 3, -0.7] }, axis: { position: [0, 4.1, 15], target: [0, 2.5, 0] }, top: { position: [0, 14, 0.1], target: [0, 2, 0] } },
     pagoda: { overview: { position: [10, 7.5, 12.5], target: [0, 3.6, 0] }, detail: { position: [4.3, 5.1, 7.1], target: [0, 5, 0] }, axis: { position: [0, 5.5, 15], target: [0, 3.8, 0] }, top: { position: [0, 16, 0.1], target: [0, 3.4, 0] } },
+    pavilion: { overview: { position: [10.4, 6.7, 13.8], target: [0, 2.8, 0] }, detail: { position: [4.9, 4.8, 8.2], target: [0, 3.8, 0] }, axis: { position: [0, 5.4, 15], target: [0, 2.8, 0] }, top: { position: [0, 14, 0.1], target: [0, 2.6, 0] } },
     garden: { overview: { position: [9, 6.2, 11], target: [0, 1.6, 0] }, detail: { position: [4.5, 3.5, 7.4], target: [0, 1.8, 1] }, axis: { position: [0, 4.2, 13], target: [0, 1.5, 0] }, top: { position: [0, 13, 0.1], target: [0, 0.8, 0] } },
     street: { overview: { position: [10, 6.8, 12], target: [0, 1.5, 0] }, detail: { position: [5.2, 3.4, 7.5], target: [0, 1.2, -1.2] }, axis: { position: [0, 3.8, 14], target: [0, 1.2, 0] }, top: { position: [0, 13, 0.1], target: [0, 0.7, 0] } },
   }
@@ -625,7 +763,7 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 <template>
   <div ref="mount" class="model-canvas" :class="{ 'external-active': Boolean(externalEmbed), immersive, 'pagoda-showcase': isPagodaShowcase }" aria-label="建筑三维模型浏览器">
     <iframe v-if="externalEmbed" class="external-model" :src="externalEmbed" title="授权平台实景三维模型" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen loading="lazy" />
-    <div class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ modelLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ isPagodaShowcase ? '重点展项 · ' : '' }}{{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
+    <div class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ displayLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ isPagodaShowcase ? '重点展项 · ' : '' }}{{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
     <div v-if="!externalEmbed" class="viewer-toolbar" aria-label="模型控制"><button type="button" :class="{ active: autoRotate }" title="自动巡游" @click="toggleAutoRotate"><span>◉</span> 巡游</button><button type="button" :class="{ active: showPresets }" title="导览视角" @click="showPresets = !showPresets"><span>⌖</span> 视角</button><button type="button" :class="{ active: scanEnabled }" title="扫描辅助" @click="toggleScan"><span>⌁</span> 扫描</button><button type="button" :class="{ active: wireframe }" title="线框模式" @click="toggleWireframe"><span>⌗</span> 线框</button><button type="button" title="重置视角" @click="resetCamera"><span>↺</span> 复位</button><button type="button" :class="{ active: immersive }" title="沉浸式全屏" @click="toggleImmersive"><span>⛶</span> 沉浸</button><div v-if="showPresets" class="preset-menu"><button type="button" @click="applyCameraPreset('overview')">整体形制</button><button type="button" @click="applyCameraPreset('detail')">构件细部</button><button type="button" @click="applyCameraPreset('axis')">空间轴线</button><button type="button" @click="applyCameraPreset('top')">俯瞰关系</button></div></div>
   </div>
 </template>

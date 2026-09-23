@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ArrowLeft, Compass, Maximize2 } from 'lucide-vue-next'
 import { RouterLink, useRoute } from 'vue-router'
 import { buildings } from '../data/buildings'
@@ -36,10 +36,20 @@ const activeAssetUrl = computed(() => selectedPoint.value?.assetUrl ?? (selected
 const activeManifestUrl = computed(() => selectedPoint.value?.manifestUrl ?? (selectedPoint.value?.useParentModel || !selectedPoint.value ? building.value.model.manifestUrl : undefined))
 const activeEmbedUrl = computed(() => selectedPoint.value?.embedUrl ?? (selectedPoint.value?.useParentModel || !selectedPoint.value ? building.value.model.embedUrl : undefined))
 const activeSource = computed(() => selectedPoint.value?.embedSource ?? (selectedPoint.value?.useParentModel || !selectedPoint.value ? building.value.model.source : '当前节点暂无独立模型；先显示程序化空间预览。'))
+// A site node identifies a place inside a building complex.  When it uses
+// the parent model, keep the parent building id as the 3D variant so the
+// viewer can select the landmark-specific proportions (for example, the
+// five-storey Yingxian timber pagoda versus the seven-storey Big Wild Goose
+// Pagoda).  Child nodes still get their own scene variant.
+const activeVariant = computed(() => selectedPoint.value?.useParentModel || !selectedPoint.value ? building.value.id : selectedPoint.value.id)
 function enterPoint(point: ScenicPoint) { selectedPoint.value = point; viewMode.value = 'model' }
 function openModel() {
   selectedPoint.value ??= overviewPoints.value[0]
   viewMode.value = 'model'
+  // The model button sits near the bottom of the overview panel. After the
+  // panel swaps, center the 3D card so the viewer itself is immediately
+  // visible instead of leaving the user at the old map scroll position.
+  void nextTick(() => document.querySelector<HTMLElement>('.viewer-card')?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
 }
 function returnToOverview() { viewMode.value = 'overview' }
 watch(() => building.value.id, () => {
@@ -51,12 +61,12 @@ watch(() => building.value.id, () => {
 <template>
   <div>
     <section class="detail-cover" :class="building.coverClass"><div class="container"><div><span class="eyebrow" style="color:#e2b781">{{ building.category }} / {{ building.era }}</span><h1>{{ building.name }}</h1><div class="pinyin">{{ building.pinyin }}</div><div class="detail-meta"><span>{{ building.location }}</span><span>·</span><span>{{ building.period }}</span><span>·</span><span>{{ building.status }}</span></div></div></div></section>
-    <div class="container detail-layout">
+    <div class="container detail-layout" :class="{ 'model-active': viewMode === 'model' }">
       <main class="detail-main"><RouterLink to="/explore" class="link-arrow" style="margin-bottom:28px"><ArrowLeft :size="15" /> 返回建筑探索</RouterLink><h2>{{ building.summary }}</h2><p>{{ building.story }}</p><div class="metrics"><div v-for="metric in building.metrics" :key="metric.label" class="metric"><small>{{ metric.label }}</small><strong>{{ metric.value }}</strong></div></div><section v-for="section in [{title:'建筑概览', text: building.story}, {title:'空间与构造', text:`${building.name}的空间由尺度、材料与行走路径共同构成。通过模型，可以从整体体量进入构件细部，理解它为何在这里以这样的方式成立。`}, {title:'当代意义', text:'数字化记录不是替代现场，而是为建筑建立另一种可持续阅读的入口。后续版本将继续补充测绘数据、修复记录与公开授权资料。'}]" :key="section.title" class="section-block"><h3>{{ section.title }}</h3><p>{{ section.text }}</p></section></main>
       <aside class="detail-aside">
         <div v-if="hasOverview" class="experience-switch"><button type="button" :class="{ active: viewMode === 'overview' }" @click="returnToOverview"><Compass :size="14" /> {{ isScenic ? '景区总览' : '位置总览' }}</button><button type="button" :class="{ active: viewMode === 'model' }" @click="openModel"><Maximize2 :size="13" /> 单体 3D</button></div>
         <ScenicOverview v-if="hasOverview && viewMode === 'overview'" :title="overviewTitle" :subtitle="overviewSubtitle" :points="overviewPoints" @select="enterPoint" />
-        <div v-else class="viewer-card"><div v-if="hasOverview" class="model-back"><button type="button" @click="returnToOverview">← 返回{{ isScenic ? '景区' : '位置' }}总览</button><span v-if="selectedPoint">{{ selectedPoint.name }} · {{ selectedPoint.status }}</span></div><span class="viewer-label">INTERACTIVE MODEL / {{ building.model.version }}</span><BuildingViewer :key="selectedPoint?.id ?? building.id" :kind="selectedPoint?.modelKind ?? building.model.kind" :asset-url="activeAssetUrl" :manifest-url="activeManifestUrl" :embed-url="activeEmbedUrl" /><span class="viewer-note">拖动旋转 · 滚轮缩放 · 双击聚焦<br>{{ activeSource ?? '当前为程序化演示；接入授权 GLB 后自动切换真实资产。' }}</span><a v-if="activeEmbedUrl" class="viewer-source-link" :href="activeEmbedUrl" target="_blank" rel="noreferrer">在原平台打开模型 ↗</a></div>
+        <div v-else class="viewer-card"><div v-if="hasOverview" class="model-back"><button type="button" @click="returnToOverview">← 返回{{ isScenic ? '景区' : '位置' }}总览</button><span v-if="selectedPoint">{{ selectedPoint.name }} · {{ selectedPoint.status }}</span></div><span class="viewer-label">INTERACTIVE MODEL / {{ building.model.version }}</span><BuildingViewer :key="selectedPoint?.id ?? building.id" :kind="selectedPoint?.modelKind ?? building.model.kind" :variant="activeVariant" :title="selectedPoint?.name ?? building.name" :asset-url="activeAssetUrl" :manifest-url="activeManifestUrl" :embed-url="activeEmbedUrl" /><span class="viewer-note">拖动旋转 · 滚轮缩放 · 双击聚焦<br>{{ activeSource ?? '当前为程序化演示；接入授权 GLB 后自动切换真实资产。' }}</span><a v-if="activeEmbedUrl" class="viewer-source-link" :href="activeEmbedUrl" target="_blank" rel="noreferrer">在原平台打开模型 ↗</a></div>
         <div class="source-card"><h3>资料与模型</h3><ul><li><span class="source-type">MODEL</span><br>版本 {{ building.model.version }} · {{ building.model.precision }}</li><li v-if="building.model.manifestUrl"><span class="source-type">LOD</span><br>按设备自动选择 low / medium / high</li><li v-if="building.model.embedUrl"><span class="source-type">PLATFORM</span><br>Sketchfab 原平台交互查看器</li><li v-else><span class="source-type">COMPONENTS</span><br>{{ building.model.nodes }} 个核心构件组</li><li v-if="building.model.license"><span class="source-type">RIGHTS</span><br>{{ building.model.license }}</li><li><span class="source-type">LOCATION</span><br>{{ building.location }} · {{ building.coordinates[1].toFixed(4) }}°N, {{ building.coordinates[0].toFixed(4) }}°E</li><li v-for="source in building.sources ?? []" :key="source.label"><span class="source-type">{{ source.kind }}</span><br><a v-if="source.href" :href="source.href" target="_blank" rel="noreferrer" style="color:#786b5d;text-decoration:underline">{{ source.label }}</a><span v-else>{{ source.label }}</span></li></ul></div>
       </aside>
     </div>

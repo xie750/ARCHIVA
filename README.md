@@ -22,11 +22,15 @@ docs/         产品、接口与模型资产规范
 
 ### 前端
 
+前端直接在终端运行，使用项目目录内的 npm 命令，不需要全局安装 pnpm。
+
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
+
+如果 PowerShell 提示禁止运行 `npm.ps1`，可改用 `npm.cmd install` 和 `npm.cmd run dev`，或调整 PowerShell 执行策略后重开终端。
 
 ### 后端
 

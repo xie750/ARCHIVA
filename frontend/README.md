@@ -4,17 +4,21 @@ Vue 3 + TypeScript + Vite 的出版级前端 Demo。当前以河南篇为第一�
 
 ## 启动
 
+在终端中执行以下命令，不需要全局安装 pnpm。
+
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 生产构建：
 
 ```bash
-pnpm build
-pnpm preview
+npm run build
+npm run preview
 ```
+
+如果 PowerShell 提示禁止运行 `npm.ps1`，可改用 `npm.cmd install`、`npm.cmd run dev` 等命令。
 
 ## 目录约定
 

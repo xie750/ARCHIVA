@@ -1,4 +1,4 @@
-export type BuildingCategory = '石窟' | '寺观' | '城门' | '古塔' | '园林'
+export type BuildingCategory = '石窟' | '寺观' | '城门' | '古塔' | '楼阁' | '园林'
 
 export interface BuildingMetric {
   label: string
@@ -57,7 +57,7 @@ export interface Building {
   }
   status: '已收录' | '持续研究'
   model: {
-    kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'garden' | 'street'
+    kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'pavilion' | 'garden' | 'street'
     version: string
     precision: string
     nodes: number
