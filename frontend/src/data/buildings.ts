@@ -1,4 +1,5 @@
 import type { Building } from '../types/building'
+import { nationalSeedBuildings } from './nationalSeed'
 
 const commonsImage = (file: string, width = 1600) =>
   `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`
@@ -403,6 +404,7 @@ export const buildings: Building[] = [
     status: '持续研究',
     model: { kind: 'pavilion', version: '0.3.0-reconstruction', precision: '本地资料复原 GLB · LOD low/medium/high', nodes: 220, manifestUrl: '/models/wuhan-yellow-crane-tower/manifest.json', source: 'ARCHIVA 项目自建资料复原样板；非现场实测，用于产品交互演示', license: '项目自有技术样板；正式出版如需实测精度，应替换为已授权扫描或摄影测量资产' },
   },
+  ...nationalSeedBuildings,
 ]
 
 export const featuredBuilding = buildings[0]

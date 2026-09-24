@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { disposeObject3D, loadModelAsset, type BrowserModelManifest } from '../../services/modelLoader'
 import { applyProceduralHeritageMaterials, disposeProceduralMaterialCache } from '../../services/proceduralMaterials'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import type { ModelAssetStatus, ModelProvider } from '../../types/building'
 
 const props = withDefaults(defineProps<{
   kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'pavilion' | 'garden' | 'street'
@@ -15,6 +16,10 @@ const props = withDefaults(defineProps<{
   manifestUrl?: string
   /** Official third-party viewer embed. Used when the source does not allow GLB redistribution. */
   embedUrl?: string
+  modelProvider?: ModelProvider
+  assetStatus?: ModelAssetStatus
+  assetSourceUrl?: string
+  assetCredit?: string
   /** Landmark name shown in the viewer HUD so every city has a clear 3D identity. */
   title?: string
 }>(), { assetUrl: undefined, manifestUrl: undefined, variant: undefined })
@@ -38,13 +43,23 @@ const modelStatus = ref('形制示意 · 等待审核资产')
 const loadProgress = ref(0)
 const loadingAsset = ref(false)
 const externalEmbed = computed(() => props.embedUrl)
+const pending3d = computed(() => !externalEmbed.value && !props.assetUrl && !props.manifestUrl)
 const hasReviewedAsset = computed(() => Boolean((props.assetUrl && !props.assetUrl.includes('cdn.example.com')) || props.manifestUrl))
 const assetBadge = computed(() => {
   if (externalEmbed.value) return 'PLATFORM 3D'
+  if (pending3d.value) return '3D 接入中'
   if (loadedRealAsset.value) return assetManifest.value?.versionStatus === 'PUBLISHED' ? 'REVIEWED GLB' : 'RECONSTRUCTION GLB'
   return hasReviewedAsset.value ? 'GLB READY' : 'CONCEPT MODEL'
 })
-const modelLabel = computed(() => ({ grotto: '石窟群 · 空间扫描', temple: '寺院轴线 · 形制复原', gate: '城门遗址 · 形制复原', pagoda: '楼阁古塔 · 构件扫描', pavilion: '临江名楼 · 形制复原', garden: '宋式园林 · 场景复原', street: '宋代街市 · 场景复原' }[props.kind]))
+const modelLabel = computed(() => ({
+  grotto: '石窟群 · 空间扫描',
+  temple: '寺院轴线 · 形制复原',
+  gate: '城门遗址 · 形制复原',
+  pagoda: '楼阁古塔 · 构件扫描',
+  pavilion: '临江名楼 · 形制复原',
+  garden: '园林院落 · 场景复原',
+  street: props.variant === 'qingming-song-street' ? '宋代街市 · 场景复原' : '街巷建筑 · 参考模型',
+}[props.kind]))
 const displayLabel = computed(() => props.title ? `${props.title} · ${modelLabel.value}` : modelLabel.value)
 type CameraPreset = 'overview' | 'detail' | 'axis' | 'top'
 type Hotspot = { id: string; label: string; description: string; placement: string; preset: CameraPreset }
@@ -722,12 +737,18 @@ function applyImmersiveCamera(enabled: boolean) {
 async function toggleImmersive() {
   if (!mount.value) return
   try {
-    if (!document.fullscreenElement) await mount.value.requestFullscreen()
-    else await document.exitFullscreen()
+    const entering = !document.fullscreenElement
+    if (entering) {
+      await mount.value.requestFullscreen()
+      immersive.value = true
+    } else {
+      await document.exitFullscreen()
+      immersive.value = false
+    }
   } catch (error) { console.warn('[BuildingViewer] fullscreen unavailable', error) }
 }
 function updateFullscreenState() {
-  const next = Boolean(document.fullscreenElement && document.fullscreenElement === mount.value)
+  const next = Boolean(document.fullscreenElement)
   immersive.value = next
   resizeRenderer()
   applyImmersiveCamera(next)
@@ -741,9 +762,14 @@ function updateFullscreenState() {
   })
 }
 onMounted(() => {
+  if (pending3d.value) {
+    modelStatus.value = props.assetStatus === 'reference' ? '参考模型待确认' : '3D 资产接入中'
+    viewerState.value = '等待模型匹配、权属核验和资产发布'
+    return
+  }
   if (props.embedUrl) {
-    modelStatus.value = '平台实景扫描 · 外部查看器'
-    viewerState.value = '真实资产已载入 · 可自由探索'
+    modelStatus.value = props.assetStatus === 'reference' ? '第三方参考模型 · 外部查看器' : '平台 3D 模型 · 外部查看器'
+    viewerState.value = props.assetStatus === 'reference' ? '参考模型已载入 · 可自由探索' : '平台资产已载入 · 可自由探索'
     return
   }
   if (!mount.value) return
@@ -790,10 +816,37 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 </script>
 
 <template>
-  <div ref="mount" class="model-canvas" :class="{ 'external-active': Boolean(externalEmbed), immersive, 'pagoda-showcase': isPagodaShowcase }" aria-label="建筑三维模型浏览器">
+  <div ref="mount" class="model-canvas" :class="{ 'external-active': Boolean(externalEmbed), 'pending-active': pending3d, immersive, 'pagoda-showcase': isPagodaShowcase }" aria-label="建筑三维模型浏览器">
+    <div v-if="pending3d" class="pending-model-state">
+      <div class="pending-copy">
+        <span class="pending-kicker">3D 资产接入中</span>
+        <strong>{{ title ?? '建筑模型' }} · 等待真实模型</strong>
+        <p>这座建筑已经进入全国索引，但还没有通过来源、版权和质量核验的 3D 资产。平台会优先匹配第三方公开模型、自有 GLB，或后续实测扫描。</p>
+        <div class="pending-steps"><span>模型匹配</span><span>权属核验</span><span>发布接入</span></div>
+        <a v-if="assetSourceUrl" :href="assetSourceUrl" target="_blank" rel="noreferrer">{{ assetCredit ?? '查看候选模型来源' }} ↗</a>
+      </div>
+      <div class="pending-visual" aria-hidden="true">
+        <div class="pending-grid" />
+        <div class="pending-scan-line" />
+        <div class="pending-massing" :class="`pending-${kind}`">
+          <span class="pending-block main" />
+          <span class="pending-block side side-left" />
+          <span class="pending-block side side-right" />
+          <span class="pending-block roof" />
+          <span class="pending-block marker" />
+        </div>
+        <div class="pending-meta">
+          <span>候选类型</span>
+          <strong>{{ modelLabel }}</strong>
+        </div>
+      </div>
+    </div>
     <iframe v-if="externalEmbed" class="external-model" :src="externalEmbed" title="授权平台实景三维模型" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen loading="lazy" />
-    <div class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ displayLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ isPagodaShowcase ? '重点展项 · ' : '' }}{{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
-    <div v-if="!externalEmbed" class="viewer-toolbar" aria-label="模型控制"><button type="button" :class="{ active: autoRotate }" title="自动巡游" @click="toggleAutoRotate"><span>◉</span> 巡游</button><button type="button" :class="{ active: showPresets }" title="导览视角" @click="showPresets = !showPresets"><span>⌖</span> 视角</button><button type="button" :class="{ active: scanEnabled }" title="扫描辅助" @click="toggleScan"><span>⌁</span> 扫描</button><button type="button" :class="{ active: wireframe }" title="线框模式" @click="toggleWireframe"><span>⌗</span> 线框</button><button type="button" title="重置视角" @click="resetCamera"><span>↺</span> 复位</button><button type="button" :class="{ active: immersive }" title="沉浸式全屏" @click="toggleImmersive"><span>⛶</span> 沉浸</button><div v-if="showPresets" class="preset-menu"><button type="button" @click="applyCameraPreset('overview')">整体形制</button><button type="button" @click="applyCameraPreset('detail')">构件细部</button><button type="button" @click="applyCameraPreset('axis')">空间轴线</button><button type="button" @click="applyCameraPreset('top')">俯瞰关系</button></div></div>
+    <button v-if="externalEmbed || pending3d" type="button" class="viewer-fullscreen-button" :class="{ active: immersive }" :title="immersive ? '退出全屏' : '全屏查看'" @click="toggleImmersive">
+      <span>{{ immersive ? '↙' : '⛶' }}</span>{{ immersive ? '退出全屏' : '全屏查看' }}
+    </button>
+    <div v-if="!pending3d" class="viewer-hud"><div class="hud-head"><div><span class="hud-kicker">DIGITAL HERITAGE / 现场模式</span><strong>{{ displayLabel }}</strong><small class="asset-status">{{ modelStatus }}</small></div><span class="live-pill"><i /> {{ isPagodaShowcase ? '重点展项 · ' : '' }}{{ assetBadge }}</span></div><div v-if="loadingAsset" class="asset-progress"><span :style="{ width: `${loadProgress}%` }" /><b>{{ loadProgress }}%</b></div><div v-if="!externalEmbed" class="hud-reticle" aria-hidden="true"><span /><b /><em /></div><template v-if="!externalEmbed"><button v-for="hotspot in hotspots" :key="hotspot.id" type="button" class="hud-hotspot" :class="hotspot.placement" :title="hotspot.description" @click.stop="selectHotspot(hotspot)"><b>{{ hotspot.id }}</b><span>{{ hotspot.label }}</span></button></template><div class="hud-bottom"><span class="hud-status"><i /> {{ viewerState }}</span><span class="hud-help">拖动旋转 · 滚轮缩放 · 双击聚焦</span></div></div>
+    <div v-if="!externalEmbed && !pending3d" class="viewer-toolbar" aria-label="模型控制"><button type="button" :class="{ active: autoRotate }" title="自动巡游" @click="toggleAutoRotate"><span>◉</span> 巡游</button><button type="button" :class="{ active: showPresets }" title="导览视角" @click="showPresets = !showPresets"><span>⌖</span> 视角</button><button type="button" :class="{ active: scanEnabled }" title="扫描辅助" @click="toggleScan"><span>⌁</span> 扫描</button><button type="button" :class="{ active: wireframe }" title="线框模式" @click="toggleWireframe"><span>⌗</span> 线框</button><button type="button" title="重置视角" @click="resetCamera"><span>↺</span> 复位</button><button type="button" :class="{ active: immersive }" title="沉浸式全屏" @click="toggleImmersive"><span>⛶</span> 沉浸</button><div v-if="showPresets" class="preset-menu"><button type="button" @click="applyCameraPreset('overview')">整体形制</button><button type="button" @click="applyCameraPreset('detail')">构件细部</button><button type="button" @click="applyCameraPreset('axis')">空间轴线</button><button type="button" @click="applyCameraPreset('top')">俯瞰关系</button></div></div>
   </div>
 </template>
 
@@ -803,6 +856,43 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 .model-canvas:fullscreen { position: fixed; inset: 0; width: 100vw; height: 100dvh; min-height: 100dvh; margin: 0; }
 .model-canvas.external-active { background: #07121a; }
 .model-canvas.external-active::before, .model-canvas.external-active::after { display: none; }
+.model-canvas.pending-active { display: grid; place-items: center; background: radial-gradient(circle at 62% 30%, rgba(64, 103, 101, .42) 0%, rgba(24, 40, 42, .98) 42%, #0b1417 100%); }
+.model-canvas.pending-active::before { background: linear-gradient(180deg, rgba(7, 25, 28, .22), transparent 44%, rgba(2, 8, 12, .72)); }
+.model-canvas.pending-active::after { opacity: .12; }
+.pending-model-state { position: relative; z-index: 4; width: min(86%, 760px); display: grid; grid-template-columns: minmax(260px, 1.05fr) minmax(220px, .95fr); gap: 34px; align-items: center; color: #d8e4dd; text-align: left; }
+.pending-copy { display: grid; gap: 15px; min-width: 0; }
+.pending-kicker { width: fit-content; border: 1px solid rgba(212, 165, 106, .36); color: #f0c27d; background: rgba(20, 34, 34, .62); padding: 5px 8px; font-size: 9px; font-weight: 700; letter-spacing: .18em; }
+.pending-model-state strong { color: #f1dfc3; font: 600 24px/1.42 'Noto Serif SC', serif; letter-spacing: .04em; }
+.pending-model-state p { max-width: 410px; margin: 0; color: #a9bab4; font-size: 12px; line-height: 1.9; }
+.pending-steps { display: flex; flex-wrap: wrap; gap: 7px; }
+.pending-steps span { border: 1px solid rgba(117, 197, 197, .28); color: #a9d2cd; background: rgba(8, 26, 31, .52); padding: 7px 9px; font-size: 10px; letter-spacing: .06em; }
+.pending-model-state a { color: #d8bd8b; font-size: 11px; text-decoration: underline; }
+.pending-visual { position: relative; min-height: 250px; border: 1px solid rgba(117, 197, 197, .16); background: linear-gradient(180deg, rgba(11, 32, 35, .58), rgba(3, 15, 18, .42)); overflow: hidden; }
+.pending-grid { position: absolute; inset: 22px; opacity: .52; background-image: linear-gradient(rgba(117, 197, 197, .13) 1px, transparent 1px), linear-gradient(90deg, rgba(117, 197, 197, .13) 1px, transparent 1px); background-size: 26px 26px; transform: perspective(260px) rotateX(58deg); transform-origin: 50% 100%; }
+.pending-scan-line { position: absolute; left: 18px; right: 18px; top: 36%; height: 1px; background: linear-gradient(90deg, transparent, rgba(120, 222, 216, .88), transparent); box-shadow: 0 0 20px rgba(120, 222, 216, .38); animation: pending-scan 4s ease-in-out infinite; }
+.pending-massing { position: absolute; left: 50%; top: 52%; width: 190px; height: 138px; transform: translate(-50%, -50%); }
+.pending-block { position: absolute; display: block; border: 1px solid rgba(216, 189, 139, .5); background: linear-gradient(180deg, rgba(216, 189, 139, .22), rgba(77, 125, 122, .12)); box-shadow: inset 0 0 18px rgba(117, 197, 197, .08), 0 12px 24px rgba(0, 0, 0, .16); }
+.pending-block.main { left: 56px; bottom: 20px; width: 78px; height: 78px; }
+.pending-block.side { bottom: 20px; width: 42px; height: 54px; border-color: rgba(117, 197, 197, .38); }
+.pending-block.side-left { left: 14px; }
+.pending-block.side-right { right: 14px; }
+.pending-block.roof { left: 40px; top: 10px; width: 110px; height: 34px; transform: skewX(-18deg); background: linear-gradient(180deg, rgba(212, 165, 106, .34), rgba(212, 165, 106, .12)); }
+.pending-block.marker { left: 88px; top: 55px; width: 14px; height: 14px; border-radius: 50%; background: #78ded8; box-shadow: 0 0 18px rgba(120, 222, 216, .72); }
+.pending-pagoda .main, .pending-pavilion .main { left: 72px; width: 48px; height: 98px; }
+.pending-pagoda .side, .pending-pavilion .side { width: 54px; height: 14px; left: 68px; right: auto; }
+.pending-pagoda .side-left, .pending-pavilion .side-left { bottom: 56px; }
+.pending-pagoda .side-right, .pending-pavilion .side-right { bottom: 88px; }
+.pending-pagoda .roof, .pending-pavilion .roof { left: 55px; top: 5px; width: 80px; height: 24px; }
+.pending-gate .main { left: 48px; width: 94px; height: 62px; }
+.pending-gate .side { height: 74px; }
+.pending-street .main, .pending-garden .main { left: 38px; bottom: 26px; width: 114px; height: 48px; }
+.pending-street .side, .pending-garden .side { bottom: 74px; width: 48px; height: 34px; }
+.pending-meta { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; color: #8eb7b2; font-size: 10px; letter-spacing: .08em; }
+.pending-meta strong { color: #f1dfc3; font: 600 12px 'Noto Sans SC', sans-serif; letter-spacing: .04em; text-align: right; }
+@keyframes pending-scan {
+  0%, 100% { transform: translateY(-50px); opacity: .28; }
+  50% { transform: translateY(82px); opacity: .95; }
+}
 .model-canvas.pagoda-showcase { background: radial-gradient(circle at 52% 32%, #5f4938 0%, #263236 32%, #0b151a 78%); }
 .model-canvas.pagoda-showcase::before { background: linear-gradient(180deg, rgba(214, 164, 101, .16), transparent 28%, transparent 68%, rgba(2, 8, 12, .86)); }
 .model-canvas.pagoda-showcase .hud-kicker { color: #d4a56a; }
@@ -811,6 +901,10 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 .model-canvas::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(131, 222, 220, .12) 4px, transparent 5px); mix-blend-mode: screen; }
 .model-canvas :deep(canvas) { position: absolute !important; inset: 0; z-index: 0; display: block; width: 100% !important; height: 100% !important; }
 .external-model { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; border: 0; background: #0b171d; }
+.viewer-fullscreen-button { position: absolute; z-index: 6; right: 16px; top: 62px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 31px; border: 1px solid rgba(216, 189, 139, .48); color: #ecd4ab; background: rgba(4, 19, 24, .72); padding: 0 10px; font-size: 10px; letter-spacing: .06em; pointer-events: auto; backdrop-filter: blur(6px); transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.viewer-fullscreen-button span { color: #78ded8; font-size: 13px; line-height: 1; }
+.viewer-fullscreen-button:hover, .viewer-fullscreen-button.active { border-color: rgba(120, 222, 216, .68); background: rgba(15, 45, 48, .82); transform: translateY(-1px); }
+.model-canvas.immersive .viewer-fullscreen-button { top: 18px; right: 18px; min-height: 36px; padding-inline: 13px; font-size: 11px; }
 .viewer-hud, .viewer-toolbar { position: absolute; z-index: 3; pointer-events: none; color: #c8e0dc; font-family: 'Noto Sans SC', sans-serif; }
 .viewer-hud { inset: 0; }
 .hud-head { position: absolute; top: 18px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
@@ -849,6 +943,14 @@ onBeforeUnmount(() => { requestController?.abort(); cleanup() })
 .preset-menu button { min-width: 92px; border: 0; padding: 6px 7px; color: #a9c9c4; background: rgba(28, 57, 60, .56); font-size: 9px; text-align: left; }
 .preset-menu button:hover { color: #f0ddbd; background: rgba(70, 47, 30, .58); }
 @media (max-width: 540px) {
+  .pending-model-state { width: min(88%, 390px); grid-template-columns: 1fr; gap: 18px; }
+  .pending-model-state strong { font-size: 19px; }
+  .pending-model-state p { font-size: 11px; line-height: 1.75; }
+  .pending-visual { min-height: 190px; }
+  .pending-massing { transform: translate(-50%, -50%) scale(.82); }
+  .pending-meta { font-size: 9px; }
+  .viewer-fullscreen-button { top: auto; right: 12px; bottom: 68px; min-height: 32px; }
+  .model-canvas.immersive .viewer-fullscreen-button { top: 14px; right: 14px; bottom: auto; }
   .hud-hotspot, .hud-help { display: none; }
   .hud-head { left: 14px; right: 14px; flex-direction: column; align-items: flex-start; gap: 7px; }
   .hud-head strong { max-width: min(260px, 74vw); line-height: 1.45; }

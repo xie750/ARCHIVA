@@ -17,7 +17,22 @@ export const useExploreStore = defineStore('explore', () => {
     const matchesRegion = activeRegion.value === '全部' || (building.region ?? '未分区') === activeRegion.value
     const matchesCity = activeCity.value === '全部' || building.location.split(' · ')[0] === activeCity.value
     const normalizedQuery = query.value.trim().toLowerCase()
-    const matchesQuery = !normalizedQuery || [building.name, building.pinyin, building.location, ...building.tags].join(' ').toLowerCase().includes(normalizedQuery)
+    const searchableText = [
+      building.name,
+      building.pinyin,
+      building.region,
+      building.location,
+      building.category,
+      building.era,
+      building.period,
+      building.summary,
+      building.story,
+      building.status,
+      ...building.tags,
+      ...building.highlights,
+      '中国 全国 国内 建筑 民生建筑 公共建筑',
+    ].filter(Boolean).join(' ').toLowerCase()
+    const matchesQuery = !normalizedQuery || searchableText.includes(normalizedQuery)
     return matchesCategory && matchesRegion && matchesCity && matchesQuery
   }))
 
