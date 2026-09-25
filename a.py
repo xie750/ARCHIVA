@@ -1,7 +1,8 @@
-import requests,re
-from bs4 import BeautifulSoup
-urls=['https://lookingglassfactory.com/looking-glass-65','https://lookingglassfactory.com/looking-glass-8','https://lookingglassfactory.com/looking-glass-16']
-for u in urls:
- h=requests.get(u).text; s=BeautifulSoup(h,'html.parser'); print('\n',u)
- print(' '.join(s.get_text(' ',strip=True).split())[:1500])
- for x in re.findall(r'\$[0-9,]+',h): print(x,end=' ')
+import re
+from pathlib import Path
+for f in ['frontend/src/data/buildings.ts','frontend/src/data/nationalSeed.ts']:
+ s=Path(f).read_text()
+ print('\n',f)
+ for m in re.finditer(r"id:\s*'([^']+)'",s):
+   if m.group(1) in ['fengxian','binyang','xiangshan','guyang','shaolin-main-hall','iron-pagoda-main','yingtian-main','qingming-gate']: continue
+   print(m.group(1))

@@ -3,9 +3,12 @@ import { computed, ref } from 'vue'
 import { BookOpen, Menu, Search, X } from 'lucide-vue-next'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import BrandMark from '../components/site/BrandMark.vue'
+import IntroExperience from '../components/site/IntroExperience.vue'
 
 const route = useRoute()
 const isMenuOpen = ref(false)
+const showIntro = ref(true)
+const isImmersive = computed(() => route.meta.immersive === true)
 const navItems = [
   { label: '首页', to: '/' },
   { label: '探索建筑', to: '/explore' },
@@ -14,7 +17,9 @@ const currentLabel = computed(() => route.name === 'building-detail' ? '建筑�
 </script>
 
 <template>
-  <div class="app-shell">
+  <RouterView v-if="isImmersive" />
+  <div v-else class="app-shell">
+    <IntroExperience v-if="showIntro && route.name === 'home'" @complete="showIntro = false" />
     <header class="topbar">
       <div class="container topbar-inner">
         <RouterLink to="/" class="brand-link" aria-label="返回首页">

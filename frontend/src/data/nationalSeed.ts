@@ -22,26 +22,26 @@ type SeedInput = Pick<Building,
   | 'model'
 >
 
-const sharedTags = ['中国建筑', '民生建筑', '公共空间', '全国索引', '待接入3D']
+const sharedTags = ['中国建筑', '民生建筑', '公共空间', '全国索引', '第三方3D展示']
 
 function seed(input: SeedInput): Building {
   return {
     ...input,
     model: resolveModelMetadata(input.id, input.model),
     tags: Array.from(new Set([...input.tags, ...sharedTags])),
-    sources: [{ label: '全国建筑索引占位资料 · 待接入正式来源', kind: '项目记录' }],
+    sources: [{ label: '全国建筑索引基础资料 · 第三方平台展示', kind: '项目记录' }],
   }
 }
 
-const indexModel = (kind: Building['model']['kind'], precision = '信息索引 · 3D 待接入'): Building['model'] => ({
+const indexModel = (kind: Building['model']['kind'], precision = '信息索引 · 第三方平台参考模型'): Building['model'] => ({
   kind,
   version: '0.1.0-index',
   precision,
   nodes: 0,
-  provider: 'pending',
-  assetStatus: 'pending',
-  source: '全国建筑表层索引；用于搜索、地图和省级入口展示',
-  license: '正式发布前需补充权属、影像和测绘资料',
+  provider: 'sketchfab',
+  assetStatus: 'reference',
+  source: '全国建筑表层索引；已接入第三方平台参考模型',
+  license: '平台嵌入展示；下载与出版需另行核验授权',
 })
 
 export const nationalSeedBuildings: Building[] = [
@@ -63,7 +63,7 @@ export const nationalSeedBuildings: Building[] = [
     tags: ['中轴线', '宫殿建筑', '世界遗产'],
     highlights: ['太和殿', '午门', '院落轴线'],
     status: '持续研究',
-    model: indexModel('gate'),
+    model: indexModel('palace'),
   }),
   seed({
     id: 'tianjin-wudadao',
@@ -363,7 +363,7 @@ export const nationalSeedBuildings: Building[] = [
     tags: ['高原建筑', '宫殿', '世界遗产'],
     highlights: ['白宫红宫', '山体台地', '城市轴线'],
     status: '持续研究',
-    model: indexModel('gate'),
+    model: indexModel('palace'),
   }),
   seed({
     id: 'gansu-jiayuguan-pass',

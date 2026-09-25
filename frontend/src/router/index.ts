@@ -5,6 +5,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
   routes: [
     { path: '/', name: 'home', component: () => import('../pages/HomePage.vue') },
+    { path: '/atlas', name: 'atlas', meta: { immersive: true }, component: () => import('../pages/NationalMapPage.vue') },
     { path: '/explore', name: 'explore', component: () => import('../pages/ExplorePage.vue') },
     { path: '/regions/:region', name: 'region', component: () => import('../pages/RegionPage.vue') },
     { path: '/buildings/:id', name: 'building-detail', component: () => import('../pages/BuildingDetailPage.vue') },

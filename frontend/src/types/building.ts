@@ -51,6 +51,8 @@ export interface ScenicPoint {
   assetStatus?: ModelAssetStatus
   sourceUrl?: string
   credit?: string
+  /** Search/candidate page on the external 3D platform when no exact model is verified yet. */
+  candidateUrl?: string
   /** Reuse the parent building model when this is a single-location overview point. */
   useParentModel?: boolean
   modelKind: Building['model']['kind']
@@ -84,7 +86,7 @@ export interface Building {
   }
   status: '已收录' | '持续研究'
   model: {
-    kind: 'grotto' | 'temple' | 'gate' | 'pagoda' | 'pavilion' | 'garden' | 'street'
+    kind: 'grotto' | 'temple' | 'palace' | 'gate' | 'pagoda' | 'pavilion' | 'garden' | 'street'
     version: string
     precision: string
     nodes: number
@@ -96,6 +98,8 @@ export interface Building {
     embedUrl?: string
     sourceUrl?: string
     credit?: string
+    /** Search/candidate page on the external 3D platform when no exact model is verified yet. */
+    candidateUrl?: string
     source?: string
     license?: string
   }

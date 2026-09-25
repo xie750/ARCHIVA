@@ -1,10 +1,11 @@
-import type { Building } from '../types/building'
+import type { Building, ScenicPoint } from '../types/building'
 import { nationalSeedBuildings } from './nationalSeed'
+import { building3dAssets, modelCandidateUrl, resolveModelMetadata } from './building3dAssets'
 
 const commonsImage = (file: string, width = 1600) =>
   `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`
 
-export const buildings: Building[] = [
+const inlineBuildings: Building[] = [
   {
     id: 'longmen-grottoes',
     region: '河南',
@@ -35,14 +36,14 @@ export const buildings: Building[] = [
       title: '龙门石窟 · 伊阙山水数字现场',
       subtitle: '先从景区总览进入，再选择一个可以被深入阅读的空间节点。',
       points: [
-        { id: 'fengxian', name: '奉先寺', subtitle: '唐代皇家石窟', description: '卢舍那大佛所在的核心洞窟，崖壁、造像与伊河共同构成龙门的主视觉。', position: [58, 38], coordinates: [112.4694, 34.5578], modelKind: 'grotto', status: '重点展项', embedUrl: 'https://sketchfab.com/models/d3b496a05fae46b5a5fdb19bb2708c4c/embed?autostart=1&ui_theme=dark&dnt=1', embedSource: 'Digital Heritage Archive / Sketchfab · 原平台公开展示' },
+        { id: 'fengxian', name: '奉先寺', subtitle: '唐代皇家石窟', description: '卢舍那大佛所在的核心洞窟，崖壁、造像与伊河共同构成龙门的主视觉。', position: [58, 38], coordinates: [112.4694, 34.5578], modelKind: 'grotto', status: '重点展项', embedUrl: 'https://sketchfab.com/models/d3b496a05fae46b5a5fdb19bb2708c4c/embed?autostart=1&preload=1&ui_theme=dark&ui_infos=0&dnt=1', embedSource: 'Digital Heritage Archive / Sketchfab · 原平台公开展示' },
         { id: 'binyang', name: '宾阳三洞', subtitle: '北魏至唐 · 三座洞窟', description: '北魏皇家开凿的连续洞窟，适合观察造像组合与空间尺度的演变。', position: [35, 53], coordinates: [112.4690, 34.5555], modelKind: 'grotto', status: '历史路径' },
         { id: 'xiangshan', name: '香山寺', subtitle: '山水观景节点', description: '从香山俯瞰伊阙，理解石窟群与山水地理之间的关系。', position: [76, 66], coordinates: [112.473914, 34.555827], modelKind: 'garden', status: '观景节点' },
         { id: 'guyang', name: '古阳洞', subtitle: '题记与书法档案', description: '北魏书法题记的集中区域，将建筑空间与文字史料放在同一条游览路径中。', position: [25, 30], coordinates: [112.4678, 34.5594], modelKind: 'grotto', status: '历史路径' },
       ],
     },
     status: '已收录',
-    model: { kind: 'grotto', version: '1.0.0', precision: '实景扫描 · 平台嵌入', nodes: 0, embedUrl: 'https://sketchfab.com/models/300cedb03eb4494991d34acebf91eda0/embed?autostart=1&ui_theme=dark&dnt=1', source: 'LibanCiel / Sketchfab · 原平台公开展示', license: '平台嵌入展示；下载与出版需另行授权' },
+    model: { kind: 'grotto', version: '1.0.0', precision: '实景扫描 · 平台嵌入', nodes: 0, embedUrl: 'https://sketchfab.com/models/300cedb03eb4494991d34acebf91eda0/embed?autostart=1&preload=1&ui_theme=dark&ui_infos=0&dnt=1', source: 'LibanCiel / Sketchfab · 原平台公开展示', license: '平台嵌入展示；下载与出版需另行授权' },
   },
   {
     id: 'shaolin-temple',
@@ -122,7 +123,7 @@ export const buildings: Building[] = [
       precision: '资料复原 GLB · LOD low/medium/high',
       nodes: 13,
       manifestUrl: '/models/kaifeng-iron-pagoda/manifest.json',
-      source: '项目自建资料复原样板；非现场实测，待接入授权扫描资产',
+      source: '项目资料复原样板；当前统一使用第三方平台参考模型',
       license: '项目自有技术样板；正式出版需替换为已授权实测资产',
     },
   },
@@ -232,7 +233,7 @@ export const buildings: Building[] = [
       points: [{ id: 'yingxian-main', name: '佛宫寺释迦塔', subtitle: '辽代五层木构塔', description: '塔身明暗层和逐层收分构成木塔的核心形制，适合从结构轴线与构件细部两种尺度阅读。', position: [50, 50], coordinates: [113.1753, 39.5592], modelKind: 'pagoda', status: '重点展项', useParentModel: true }],
     },
     status: '持续研究',
-    model: { kind: 'pagoda', version: '0.2.0-reconstruction', precision: '资料复原 GLB · LOD low/medium/high', nodes: 96, manifestUrl: '/models/yingxian-wooden-pagoda/manifest.json', source: 'ARCHIVA 项目自建资料复原样板；非现场实测，待接入授权扫描资产', license: '项目自有技术样板；正式出版需替换为已授权实测资产' },
+    model: { kind: 'pagoda', version: '0.2.0-reconstruction', precision: '第三方平台参考模型 · LOD low/medium/high', nodes: 96, manifestUrl: '/models/yingxian-wooden-pagoda/manifest.json', source: '项目资料复原样板；当前统一使用第三方平台参考模型', license: '平台嵌入展示；下载与出版需另行核验授权' },
   },
   {
     id: 'xian-big-wild-goose-pagoda',
@@ -266,7 +267,7 @@ export const buildings: Building[] = [
       points: [{ id: 'xian-big-wild-goose-main', name: '大雁塔本体', subtitle: '唐代七层砖塔', description: '进入单体模型观察砖塔层级、券门和仿木构檐口，并理解它与大慈恩寺中轴的关系。', position: [50, 50], coordinates: [108.9641, 34.2188], modelKind: 'pagoda', status: '重点展项', useParentModel: true }],
     },
     status: '持续研究',
-    model: { kind: 'pagoda', version: '0.2.0-reconstruction', precision: '资料复原 GLB · LOD low/medium/high', nodes: 84, manifestUrl: '/models/xian-big-wild-goose-pagoda/manifest.json', source: 'ARCHIVA 项目自建资料复原样板；非现场实测，待接入授权扫描资产', license: '项目自有技术样板；正式出版需替换为已授权实测资产' },
+    model: { kind: 'pagoda', version: '0.2.0-reconstruction', precision: '第三方平台参考模型 · LOD low/medium/high', nodes: 84, manifestUrl: '/models/xian-big-wild-goose-pagoda/manifest.json', source: '项目资料复原样板；当前统一使用第三方平台参考模型', license: '平台嵌入展示；下载与出版需另行核验授权' },
   },
   {
     id: 'shanhaiguan-first-pass',
@@ -331,10 +332,10 @@ export const buildings: Building[] = [
     scenic: {
       title: '曲阜孔庙 · 礼制中轴数字现场',
       subtitle: '从牌坊、碑亭到大成殿，沿九进院落阅读礼制建筑的层层递进。',
-      points: [{ id: 'qufu-dacheng-hall', name: '大成殿', subtitle: '孔庙核心殿宇', description: '模型聚焦大成殿的重檐歇山屋顶、石柱与前院台基，并保留中轴院落关系。', position: [50, 50], coordinates: [116.9862, 35.5964], modelKind: 'temple', status: '重点展项' }],
+      points: [{ id: 'qufu-dacheng-hall', name: '大成殿', subtitle: '孔庙核心殿宇', description: '模型聚焦大成殿的重檐歇山屋顶、石柱与前院台基，并保留中轴院落关系。', position: [50, 50], coordinates: [116.9862, 35.5964], modelKind: 'temple', status: '重点展项', useParentModel: true }],
     },
     status: '持续研究',
-    model: { kind: 'temple', version: '0.1.0-reconstruction', precision: '院落形制复原 · 待接入授权扫描', nodes: 152, source: '依据公开测绘与建筑史资料制作的展示样板', license: '正式出版需替换为已授权实测资产' },
+    model: { kind: 'temple', version: '0.1.0-reconstruction', precision: '第三方平台参考模型 · 院落形制', nodes: 152, source: '依据公开测绘与建筑史资料制作的展示样板', license: '平台嵌入展示；下载与出版需另行核验授权' },
   },
   {
     id: 'anhui-hongcun-village',
@@ -368,7 +369,7 @@ export const buildings: Building[] = [
       points: [{ id: 'hongcun-south-lake', name: '南湖书院', subtitle: '徽州水院与书院', description: '模型聚焦南湖书院的院落、月门、临水栏杆和粉墙黛瓦，并保留水系与步行路径。', position: [50, 50], coordinates: [117.9911, 30.1119], modelKind: 'garden', status: '重点展项' }],
     },
     status: '持续研究',
-    model: { kind: 'garden', version: '0.1.0-reconstruction', precision: '聚落场景复原 · 待接入授权扫描', nodes: 176, source: '依据公开村落测绘与建筑史资料制作的展示样板', license: '正式出版需替换为已授权实测资产' },
+    model: { kind: 'garden', version: '0.1.0-reconstruction', precision: '第三方平台参考模型 · 聚落场景', nodes: 176, source: '依据公开村落测绘与建筑史资料制作的展示样板', license: '平台嵌入展示；下载与出版需另行核验授权' },
   },
   {
     id: 'wuhan-yellow-crane-tower',
@@ -404,6 +405,50 @@ export const buildings: Building[] = [
     status: '持续研究',
     model: { kind: 'pavilion', version: '0.3.0-reconstruction', precision: '本地资料复原 GLB · LOD low/medium/high', nodes: 220, manifestUrl: '/models/wuhan-yellow-crane-tower/manifest.json', source: 'ARCHIVA 项目自建资料复原样板；非现场实测，用于产品交互演示', license: '项目自有技术样板；正式出版如需实测精度，应替换为已授权扫描或摄影测量资产' },
   },
+]
+
+/**
+ * Apply the same external-platform metadata to scenic child nodes. A child
+ * keeps an iframe only when its own URL has been reviewed; otherwise it gets
+ * a search link and an honest pending state instead of a different building.
+ */
+function resolveScenicPoint(point: ScenicPoint): ScenicPoint {
+  const asset = building3dAssets[point.id]
+  if (!asset) {
+    return {
+      ...point,
+      provider: point.provider ?? (point.embedUrl ? 'sketchfab' : 'pending'),
+      assetStatus: point.assetStatus ?? (point.embedUrl ? 'matched' : 'pending'),
+      ...(point.embedUrl ? { candidateUrl: point.candidateUrl } : { candidateUrl: point.candidateUrl ?? modelCandidateUrl(`${point.name} ${point.subtitle}`) }),
+      sourceUrl: point.sourceUrl ?? (point.embedUrl ? point.embedUrl : undefined),
+      credit: point.credit ?? (point.embedUrl ? 'Sketchfab 原平台公开展示 · 作者信息待补充' : undefined),
+      embedSource: point.embedSource ?? (point.embedUrl ? '第三方 Sketchfab 原平台公开展示' : `${point.name} 尚未确认对应的第三方专属模型。`),
+    }
+  }
+  return {
+    ...point,
+    provider: asset.provider,
+    assetStatus: asset.status,
+    embedUrl: asset.embedUrl ?? point.embedUrl,
+    embedSource: asset.notes ? `${asset.credit ?? '第三方模型'} · ${asset.notes}` : point.embedSource,
+    sourceUrl: asset.sourceUrl ?? point.sourceUrl,
+    credit: asset.credit ?? point.credit,
+    candidateUrl: asset.candidateUrl ?? point.candidateUrl,
+  }
+}
+
+function externalizeBuilding(building: Building): Building {
+  return {
+    ...building,
+    model: resolveModelMetadata(building.id, building.model),
+    scenic: building.scenic
+      ? { ...building.scenic, points: building.scenic.points.map(resolveScenicPoint) }
+      : undefined,
+  }
+}
+
+export const buildings: Building[] = [
+  ...inlineBuildings.map(externalizeBuilding),
   ...nationalSeedBuildings,
 ]
 
