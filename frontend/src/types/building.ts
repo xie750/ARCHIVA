@@ -26,8 +26,9 @@ export interface BuildingImage {
   alt: string
   credit: string
   license: string
-  sourceUrl: string
+  sourceUrl?: string
   position?: string
+  kind?: 'photo'
 }
 
 export type ModelProvider = 'local-glb' | 'sketchfab' | 'model-viewer' | 'cesium' | 'pending'

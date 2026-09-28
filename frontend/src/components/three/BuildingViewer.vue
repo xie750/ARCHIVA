@@ -33,6 +33,7 @@ const props = withDefaults(defineProps<{
 
 const mount = ref<HTMLDivElement | null>(null)
 const localStage = ref<HTMLDivElement | null>(null)
+const localWebglHost = ref<HTMLDivElement | null>(null)
 const immersive = ref(false)
 const embedLoaded = ref(false)
 const embedError = ref(false)
@@ -58,8 +59,9 @@ let visibilityObserver: IntersectionObserver | undefined
 // show another site's model.
 const externalEmbed = computed(() => props.embedUrl?.trim() || '')
 const localAsset = computed(() => props.assetUrl?.trim() || '')
-const shouldRenderEmbed = computed(() => isNearViewport.value && Boolean(externalEmbed.value))
-const shouldRenderLocal = computed(() => isNearViewport.value && !externalEmbed.value && Boolean(localAsset.value))
+const shouldUseLocal = computed(() => Boolean(localAsset.value) && (!externalEmbed.value || embedError.value))
+const shouldRenderEmbed = computed(() => isNearViewport.value && Boolean(externalEmbed.value) && !shouldUseLocal.value)
+const shouldRenderLocal = computed(() => isNearViewport.value && shouldUseLocal.value)
 const pending3d = computed(() => !externalEmbed.value && !localAsset.value)
 const displayTitle = computed(() => props.title?.trim() || '建筑模型')
 const providerLabel = computed(() => {
@@ -72,11 +74,15 @@ const providerLabel = computed(() => {
     default: return '第三方平台'
   }
 })
+const viewerModeLabel = computed(() => shouldUseLocal.value
+  ? 'DIGITAL HERITAGE / 项目模型模式'
+  : 'DIGITAL HERITAGE / 外部平台模式')
 const statusLabel = computed(() => {
   if (pending3d.value) return '尚未确认该建筑对应模型'
+  if (localError.value && shouldUseLocal.value) return '项目模型加载失败'
+  if (shouldUseLocal.value && !localLoaded.value) return embedError.value ? '第三方不可用 · 切换项目模型…' : '载入项目专属模型…'
+  if (shouldUseLocal.value && localLoaded.value) return embedError.value ? '项目模型 · 外部服务备用' : '项目模型 · 已加载'
   if (embedError.value) return '第三方模型加载失败'
-  if (localError.value) return '项目模型加载失败'
-  if (localAsset.value && !localLoaded.value) return '载入项目专属模型…'
   if (!embedLoaded.value) return '连接第三方模型服务…'
   switch (props.assetStatus) {
     case 'published': return '第三方模型 · 已审核'
@@ -89,9 +95,8 @@ const statusLabel = computed(() => {
 })
 const assetBadge = computed(() => {
   if (pending3d.value) return 'NO EXACT MODEL'
-  if (embedError.value) return '3D ERROR'
-  if (localError.value) return '3D ERROR'
-  if (localAsset.value) return 'PROJECT 3D'
+  if (shouldUseLocal.value) return 'PROJECT 3D'
+  if (embedError.value || localError.value) return '3D ERROR'
   return 'PLATFORM 3D'
 })
 const modelLabel = computed(() => props.variant === 'guangxi-chengyang-wind-rain-bridge'
@@ -111,10 +116,10 @@ const sourceHref = computed(() => props.assetSourceUrl?.trim() || externalEmbed.
 const sourceLabel = computed(() => props.assetCredit?.trim() || (props.candidateUrl ? '打开第三方候选搜索' : providerLabel.value + ' 模型来源'))
 const viewerState = computed(() => {
   if (pending3d.value) return '暂无该建筑对应的第三方模型'
+  if (shouldUseLocal.value && localError.value) return '项目专属模型暂时不可用'
+  if (shouldUseLocal.value && !localLoaded.value) return '正在载入项目专属模型'
+  if (shouldUseLocal.value) return '项目专属 3D 模型已加载 · 可交互浏览'
   if (embedError.value) return '外部模型暂时不可用'
-  if (localAsset.value && localError.value) return '项目专属模型暂时不可用'
-  if (localAsset.value && !localLoaded.value) return '正在载入项目专属模型'
-  if (localAsset.value) return '项目专属 3D 模型已加载 · 可交互浏览'
   if (!embedLoaded.value) return '正在载入外部模型'
   return '第三方平台模型已加载 · 可交互浏览'
 })
@@ -127,14 +132,14 @@ async function mountLocalViewer(url: string) {
   localCleanup = undefined
   localLoaded.value = false
   localError.value = false
-  if (!url || !localStage.value) return
+  if (!url || !localWebglHost.value) return
   const token = ++localLoadToken
   try {
     const THREE = await import('three')
     const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
     const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
-    if (token !== localLoadToken || !localStage.value) return
-    const stage = localStage.value
+    if (token !== localLoadToken || !localWebglHost.value) return
+    const stage = localWebglHost.value
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#07151b')
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100)
@@ -142,6 +147,8 @@ async function mountLocalViewer(url: string) {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = props.kind === 'palace' ? 1.08 : 1
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     stage.replaceChildren(renderer.domElement)
@@ -150,6 +157,8 @@ async function mountLocalViewer(url: string) {
     controls.target.set(0, 2.2, 0)
     controls.minDistance = 7
     controls.maxDistance = 28
+    controls.minPolarAngle = 0.14
+    controls.maxPolarAngle = Math.PI * 0.49
     scene.add(new THREE.HemisphereLight(0xb7dfdf, 0x16221f, 2.2))
     const key = new THREE.DirectionalLight(0xffdfb2, 3.2)
     key.position.set(7, 14, 9)
@@ -183,11 +192,30 @@ async function mountLocalViewer(url: string) {
       const center = bounds.getCenter(new THREE.Vector3())
       const size = bounds.getSize(new THREE.Vector3())
       model.position.sub(center)
-      const scale = 8 / Math.max(size.x, size.y, size.z, 1)
+      const isPalaceGroup = props.kind === 'palace'
+      const targetSize = isPalaceGroup ? 9.6 : 8
+      const scale = targetSize / Math.max(size.x, size.y, size.z, 1)
       model.scale.setScalar(scale)
-      model.position.y -= (size.y * scale) / 2 - 0.2
+      model.updateMatrixWorld(true)
+      const fittedBeforeLift = new THREE.Box3().setFromObject(model)
+      model.position.y += 0.04 - fittedBeforeLift.min.y
+      model.updateMatrixWorld(true)
       scene.add(model)
-      controls.target.set(0, 2.2, 0)
+      const fitted = new THREE.Box3().setFromObject(model)
+      const fittedSize = fitted.getSize(new THREE.Vector3())
+      const targetY = isPalaceGroup ? fitted.min.y + fittedSize.y * 0.48 : fitted.min.y + fittedSize.y * 0.58
+      const distance = Math.max(fittedSize.x, fittedSize.z, 5)
+      controls.target.set(0, targetY, 0)
+      if (isPalaceGroup) {
+        camera.position.set(distance * 0.78, Math.max(fittedSize.y * 3.6, 3.8), distance * 0.94)
+        controls.minDistance = Math.max(3.8, distance * 0.38)
+        controls.maxDistance = distance * 2.3
+      } else {
+        camera.position.set(distance * 0.82, Math.max(fittedSize.y * 1.6, 6.4), distance * 1.05)
+        controls.minDistance = Math.max(5.5, distance * 0.44)
+        controls.maxDistance = distance * 3
+      }
+      camera.lookAt(controls.target)
       controls.update()
       localLoaded.value = true
       localError.value = false
@@ -350,6 +378,7 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
       />
     </div>
     <div v-else-if="shouldRenderLocal" ref="localStage" class="local-model-stage" aria-live="polite">
+      <div ref="localWebglHost" class="local-webgl-host" aria-hidden="true" />
       <span v-if="!localLoaded && !localError" class="local-model-loading">正在载入项目专属 3D 模型…</span>
       <span v-if="localError" class="local-model-loading">项目专属 3D 模型暂时不可用</span>
     </div>
@@ -374,7 +403,7 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
     <div class="viewer-hud">
       <div class="hud-head">
         <div>
-          <span class="hud-kicker">DIGITAL HERITAGE / 外部平台模式</span>
+          <span class="hud-kicker">{{ viewerModeLabel }}</span>
           <strong>{{ displayLabel }}</strong>
           <small class="asset-status">{{ statusLabel }}</small>
         </div>
@@ -413,6 +442,11 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
   inset: 0;
   overflow: hidden;
   background: #07151b;
+}
+
+.local-webgl-host {
+  position: absolute;
+  inset: 0;
 }
 
 .local-model-stage canvas {
@@ -572,7 +606,7 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
   position: absolute;
   z-index: 6;
   right: 16px;
-  top: 62px;
+  top: 84px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -706,7 +740,7 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
   .external-pending { padding: 28px 22px; }
   .external-pending strong { font-size: 19px; }
   .external-pending p { font-size: 11px; line-height: 1.75; }
-  .viewer-fullscreen-button { top: auto; right: 12px; bottom: 62px; min-height: 32px; }
+  .viewer-fullscreen-button { top: 92px; right: 12px; bottom: auto; min-height: 32px; }
   .model-canvas.immersive .viewer-fullscreen-button { top: 14px; right: 14px; bottom: auto; }
   .hud-head { left: 14px; right: 14px; flex-direction: column; gap: 7px; }
   .hud-head strong { max-width: min(260px, 74vw); line-height: 1.45; }

@@ -1,4 +1,4 @@
-# 中国建筑数字志 · 出版 Demo
+# 中国建筑数字志 
 
 这是一个面向出版展示的“中国建筑数字博物馆”首版样片，首发展区聚焦河南代表性建筑。产品以“发现建筑 → 阅读历史 → 进入空间 → 查看来源”为核心体验，并为后续扩展到更多省份保留统一的数据与展示入口。
 
@@ -29,8 +29,6 @@ cd frontend
 npm install
 npm run dev
 ```
-
-如果 PowerShell 提示禁止运行 `npm.ps1`，可改用 `npm.cmd install` 和 `npm.cmd run dev`，或调整 PowerShell 执行策略后重开终端。
 
 ### 后端
 
