@@ -58,6 +58,23 @@ const localProjectAsset = (
   notes: options.notes ?? `${label} 已接入项目本地 GLB，可在详情页直接交互浏览。`,
 })
 
+export const catalogGeneratedAsset = (
+  id: string,
+  label: string,
+  kind?: Building['model']['kind'],
+): Building3DAsset => ({
+  provider: 'local-glb',
+  status: 'published',
+  version: 'project-catalog-generated-0.1',
+  precision: `${kind ? `${kind} · ` : ''}项目自动生成形制 GLB`,
+  assetUrl: `/models/catalog-generated/${id}/model-medium.glb`,
+  manifestUrl: `/models/catalog-generated/${id}/manifest.json`,
+  sourceUrl: `/models/catalog-generated/${id}/model-medium.glb`,
+  credit: 'ARCHIVA 项目自动生成形制模型',
+  license: '项目展示模型；正式出版需替换为授权扫描、摄影测量或精修模型',
+  notes: `${label} 已接入项目本地 3D 形制模型；用于补齐交互浏览入口，非现场测绘。`,
+})
+
 /**
  * Keep every catalog entry explicit even while its dedicated external model
  * is being curated. The label is used for the platform search link and keeps
@@ -117,6 +134,17 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     credit: 'ARCHIVA 项目自建故宫形制复原模型',
     license: '项目展示模型；不可据此主张现场测绘精度',
     notes: '第三方公开模型出现破面和贴图拉伸后，改用项目自建形制复原样板，重点表达红墙、黄瓦、中轴院落、午门、太和殿和角楼关系。',
+  },
+  'beijing-temple-of-heaven': {
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-6ba3481',
+    precision: '第三方 Sketchfab 模型嵌入 · 北京天坛祈年殿',
+    embedUrl: sketchfabEmbed('6ba3481dbb8b4dc69ac496cca994e500'),
+    sourceUrl: 'https://sketchfab.com/3d-models/the-temple-of-heaven-in-beijing-6ba3481dbb8b4dc69ac496cca994e500',
+    credit: 'dablive / Sketchfab',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '模型标题明确对应 The Temple of Heaven in Beijing / 北京天坛祈年殿；优先于项目自动生成兜底模型。',
   },
   'shanhaiguan-first-pass': localProjectAsset('shanhaiguan-town-east', '山海关天下第一关', {
     version: 'project-shanhaiguan-gate-0.2',
@@ -190,6 +218,17 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     }),
     candidateUrl: 'https://sketchfab.com/models/8d56b5d7f23246be91da35b7a33328fe',
   },
+  'shanghai-oriental-pearl-tower': {
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-0bc2d05',
+    precision: '第三方 Sketchfab 模型嵌入 · Oriental Pearl Tower',
+    embedUrl: sketchfabEmbed('0bc2d057bbbb4ef0a753ccc02bd862e5'),
+    sourceUrl: 'https://sketchfab.com/3d-models/oriental-pearl-tower-0bc2d057bbbb4ef0a753ccc02bd862e5',
+    credit: 'Nancy.Z / Sketchfab',
+    license: 'CC Attribution；正式出版需按原页面署名与授权要求执行',
+    notes: '模型标题与说明明确对应上海东方明珠；优先于项目自动生成兜底模型。',
+  },
   'jiangxi-tengwang-pavilion': {
     provider: 'sketchfab',
     status: 'matched',
@@ -221,6 +260,39 @@ export const building3dAssets: Record<string, Building3DAsset> = {
       notes: '本地模型重点表达五层木构塔身、逐层收分、中心塔心柱和檐口斗拱节奏。',
     }),
     candidateUrl: 'https://sketchfab.com/models/555738658d654e679dfbc67d2dc03431',
+  },
+  'hebei-zhaozhou-bridge': {
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-e686247',
+    precision: '第三方 Sketchfab 模型嵌入 · 赵州桥白模',
+    embedUrl: sketchfabEmbed('e686247a931a4dd49049a45d67a9ed3f'),
+    sourceUrl: 'https://sketchfab.com/3d-models/e686247a931a4dd49049a45d67a9ed3f',
+    credit: 'duyou666 / Sketchfab',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '模型标题明确为赵州桥白模，桥体完整度优先于项目自动生成兜底模型。',
+  },
+  'yunnan-chongsheng-three-pagodas': {
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-bb02d61',
+    precision: '第三方 Sketchfab 摄影测量模型 · 崇圣寺三塔',
+    embedUrl: sketchfabEmbed('bb02d61ecd864df4a80fcee975bc8ad2'),
+    sourceUrl: 'https://sketchfab.com/3d-models/chinese-pagoda-bb02d61ecd864df4a80fcee975bc8ad2',
+    credit: 'Lionel / Sketchfab',
+    license: 'CC Attribution-NonCommercial；正式出版需按原页面授权要求执行',
+    notes: '模型说明明确对应大理崇圣寺三塔并标注摄影测量来源；优先于项目自动生成兜底模型。',
+  },
+  'taiwan-taipei-101': {
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-44ba761',
+    precision: '第三方 Sketchfab 模型嵌入 · Taipei 101',
+    embedUrl: sketchfabEmbed('44ba761a1bdb456cbdd0da9eadfc6288'),
+    sourceUrl: 'https://sketchfab.com/3d-models/taipei-101-44ba761a1bdb456cbdd0da9eadfc6288',
+    credit: 'ExtraVision / Sketchfab',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '模型标题和说明明确对应 Taipei 101；优先于项目自动生成兜底模型。',
   },
   'xian-big-wild-goose-pagoda': {
     ...localProjectAsset('xian-big-wild-goose-pagoda', '大雁塔', {
@@ -318,7 +390,10 @@ for (const [id, label] of Object.entries(pendingExternalModels)) {
 export function resolveModelMetadata(id: string, model: Building['model']): Building['model'] {
   // Unknown IDs remain honest. A search link is useful for curation, but a
   // search result must never be promoted to an iframe for a different site.
-  const asset = building3dAssets[id] ?? pendingAsset(id.replace(/[-_]+/g, ' '))
+  const curatedAsset = building3dAssets[id] ?? pendingAsset(id.replace(/[-_]+/g, ' '))
+  const asset = curatedAsset.provider === 'pending'
+    ? catalogGeneratedAsset(id, id.replace(/[-_]+/g, ' '), model.kind)
+    : curatedAsset
   const usesLocalAsset = asset.provider === 'local-glb'
   return {
     ...model,

@@ -12,7 +12,11 @@
     "generate:shanhaiguan-gate-assets": "node scripts/generate-shanhaiguan-gate-assets.mjs",
     "generate:pagoda-reconstruction-assets": "node scripts/generate-pagoda-reconstruction-assets.mjs",
     "generate:yellow-crane-tower-assets": "node scripts/generate-yellow-crane-tower-assets.mjs",
-    "generate:forbidden-city-assets": "node scripts/generate-forbidden-city-assets.mjs"
+    "generate:forbidden-city-assets": "node scripts/generate-forbidden-city-assets.mjs",
+    "generate:catalog-3d-assets": "node scripts/generate-catalog-3d-assets.mjs",
+    "audit:3d-coverage": "node scripts/audit-3d-coverage.mjs",
+    "audit:image-coverage": "node scripts/audit-image-coverage.mjs",
+    "fetch:wikimedia-images": "node scripts/fetch-wikimedia-images.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.1",

@@ -151,6 +151,9 @@ async function mountLocalViewer(url: string) {
     renderer.toneMappingExposure = props.kind === 'palace' ? 1.08 : 1
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.domElement.style.display = 'block'
+    renderer.domElement.style.width = '100%'
+    renderer.domElement.style.height = '100%'
     stage.replaceChildren(renderer.domElement)
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
@@ -449,7 +452,7 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
   inset: 0;
 }
 
-.local-model-stage canvas {
+.local-model-stage :deep(canvas) {
   display: block;
   width: 100%;
   height: 100%;

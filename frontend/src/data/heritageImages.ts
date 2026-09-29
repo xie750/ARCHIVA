@@ -2,7 +2,7 @@ import type { BuildingImage } from '../types/building'
 
 export const verifiedHeritageImages: Record<string, BuildingImage> = {
   'beijing-forbidden-city': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Sunset_of_the_Forbidden_City_2006.JPG/1920px-Sunset_of_the_Forbidden_City_2006.JPG',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Sunset_of_the_Forbidden_City_2006.JPG/960px-Sunset_of_the_Forbidden_City_2006.JPG',
     alt: '北京故宫建筑群夕照实景',
     credit: 'User:kallgan / Wikimedia Commons',
     license: 'CC BY-SA 3.0',
@@ -11,7 +11,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'tianjin-wudadao': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Five_Great_Avenues_21398-Tianjin_%2849063953692%29.jpg/1920px-Five_Great_Avenues_21398-Tianjin_%2849063953692%29.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Five_Great_Avenues_21398-Tianjin_%2849063953692%29.jpg/960px-Five_Great_Avenues_21398-Tianjin_%2849063953692%29.jpg',
     alt: '天津五大道历史街区建筑实景',
     credit: 'xiquinhosilva / Wikimedia Commons',
     license: 'CC BY 2.0',
@@ -20,7 +20,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'shanghai-shikumen': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/20090518_Shanghai_Shikumen_Museum_6867.jpg/1920px-20090518_Shanghai_Shikumen_Museum_6867.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/20090518_Shanghai_Shikumen_Museum_6867.jpg/960px-20090518_Shanghai_Shikumen_Museum_6867.jpg',
     alt: '上海石库门建筑室内与门楼实景',
     credit: 'Jakub Halun / Wikimedia Commons',
     license: 'CC BY-SA 3.0',
@@ -29,7 +29,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'chongqing-hongyadong': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Hongya_Cave_20180520.jpg/1920px-Hongya_Cave_20180520.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Hongya_Cave_20180520.jpg/960px-Hongya_Cave_20180520.jpg',
     alt: '重庆洪崖洞吊脚楼街区夜景实景',
     credit: 'xiquinhosilva / Wikimedia Commons',
     license: 'CC BY 2.0',
@@ -38,7 +38,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'jiangsu-suzhou-classical-gardens': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Classical_Gardens_of_Suzhou_pavilion%2C_August_2016.jpg/1920px-Classical_Gardens_of_Suzhou_pavilion%2C_August_2016.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/Classical_Gardens_of_Suzhou_pavilion%2C_August_2016.jpg/960px-Classical_Gardens_of_Suzhou_pavilion%2C_August_2016.jpg',
     alt: '苏州古典园林亭台与水院实景',
     credit: 'Jason Zhang / Wikimedia Commons',
     license: 'CC0',
@@ -47,7 +47,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'zhejiang-tianyige': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Tianyi_Pavilion_Museum_9.jpg/1920px-Tianyi_Pavilion_Museum_9.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Tianyi_Pavilion_Museum_9.jpg/960px-Tianyi_Pavilion_Museum_9.jpg',
     alt: '宁波天一阁博物馆院落建筑实景',
     credit: '钉钉 / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -65,7 +65,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'jiangxi-tengwang-pavilion': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Pavilion_of_Prince_Teng%2C_Nanchang%2C_China1.jpg/1920px-Pavilion_of_Prince_Teng%2C_Nanchang%2C_China1.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Pavilion_of_Prince_Teng%2C_Nanchang%2C_China1.jpg/960px-Pavilion_of_Prince_Teng%2C_Nanchang%2C_China1.jpg',
     alt: '南昌滕王阁临江楼阁实景',
     credit: 'Sherbet / Wikimedia Commons',
     license: 'CC BY 2.5',
@@ -83,7 +83,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'guangdong-chen-clan-academy': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/81/Chen_Clan_Ancestral_Hall_2025.06_04.jpg/1920px-Chen_Clan_Ancestral_Hall_2025.06_04.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/81/Chen_Clan_Ancestral_Hall_2025.06_04.jpg/960px-Chen_Clan_Ancestral_Hall_2025.06_04.jpg',
     alt: '广州陈家祠院落建筑实景',
     credit: 'Shujianyang / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -101,7 +101,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'sichuan-dujiangyan': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/Dujiang_Weir.jpg/1920px-Dujiang_Weir.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/Dujiang_Weir.jpg/960px-Dujiang_Weir.jpg',
     alt: '四川都江堰水利工程鱼嘴与河道实景',
     credit: '星星 / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -110,7 +110,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'guizhou-zhaoxing-dong-village': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/1_zhaoxing_2015.jpg/1920px-1_zhaoxing_2015.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/1_zhaoxing_2015.jpg/960px-1_zhaoxing_2015.jpg',
     alt: '贵州肇兴侗寨鼓楼与村寨实景',
     credit: 'Chensiyuan / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -119,7 +119,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'yunnan-lijiang-old-town': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/1_lijiang_old_town_night.jpg/1920px-1_lijiang_old_town_night.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/1_lijiang_old_town_night.jpg/960px-1_lijiang_old_town_night.jpg',
     alt: '云南丽江古城街巷夜景实景',
     credit: 'Chensiyuan / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -137,7 +137,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'qinghai-kumbum-monastery': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Kumbum_monastery_roof%2C_Qinghai_province%2C_China.png/1920px-Kumbum_monastery_roof%2C_Qinghai_province%2C_China.png',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Kumbum_monastery_roof%2C_Qinghai_province%2C_China.png/960px-Kumbum_monastery_roof%2C_Qinghai_province%2C_China.png',
     alt: '青海塔尔寺屋顶与寺院建筑细部实景',
     credit: 'Wikiwakhan / Wikimedia Commons',
     license: 'CC0',
@@ -146,7 +146,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'ningxia-western-xia-mausoleums': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Reconstructed_model_of_Xixia%28western_Xia%29_Mausoleum_in_Xixia_museum.jpg/1920px-Reconstructed_model_of_Xixia%28western_Xia%29_Mausoleum_in_Xixia_museum.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Reconstructed_model_of_Xixia%28western_Xia%29_Mausoleum_in_Xixia_museum.jpg/960px-Reconstructed_model_of_Xixia%28western_Xia%29_Mausoleum_in_Xixia_museum.jpg',
     alt: '宁夏西夏陵博物馆陵寝复原模型实景',
     credit: 'Hiroooooo / Wikimedia Commons',
     license: 'CC BY-SA 3.0',
@@ -155,7 +155,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'xinjiang-kashgar-old-city': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg/1920px-East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg/960px-East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg',
     alt: '新疆喀什古城东门实景',
     credit: 'N509FZ / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -164,7 +164,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'hainan-haikou-qilou': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/%E6%B5%B7%E5%8F%A3%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97_-_Haikou_Arcaded_Streets_-_2016.01_-_panoramio.jpg/1920px-%E6%B5%B7%E5%8F%A3%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97_-_Haikou_Arcaded_Streets_-_2016.01_-_panoramio.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/%E6%B5%B7%E5%8F%A3%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97_-_Haikou_Arcaded_Streets_-_2016.01_-_panoramio.jpg/960px-%E6%B5%B7%E5%8F%A3%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97_-_Haikou_Arcaded_Streets_-_2016.01_-_panoramio.jpg',
     alt: '海南海口骑楼老街街巷建筑实景',
     credit: 'rheins / Wikimedia Commons',
     license: 'CC BY 3.0',
@@ -173,7 +173,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'tibet-potala-palace': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Panorama_of_Prayer_wheels_around_the_Potala_on_20_May_2014_-_14206765086.jpg/1920px-Panorama_of_Prayer_wheels_around_the_Potala_on_20_May_2014_-_14206765086.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Panorama_of_Prayer_wheels_around_the_Potala_on_20_May_2014_-_14206765086.jpg/960px-Panorama_of_Prayer_wheels_around_the_Potala_on_20_May_2014_-_14206765086.jpg',
     alt: '西藏布达拉宫周边转经筒与宫体空间实景',
     credit: 'Andrew and Annemarie / Wikimedia Commons',
     license: 'CC BY-SA 2.0',
@@ -191,7 +191,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'liaoning-shenyang-imperial-palace': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Mukden_Palace_drone_view_5_%28cropped_%26_rotated%29.jpg/1920px-Mukden_Palace_drone_view_5_%28cropped_%26_rotated%29.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Mukden_Palace_drone_view_5_%28cropped_%26_rotated%29.jpg/960px-Mukden_Palace_drone_view_5_%28cropped_%26_rotated%29.jpg',
     alt: '辽宁沈阳故宫建筑群航拍实景',
     credit: 'Techyan / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -200,7 +200,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'jilin-puppet-palace': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/25238-Changchun%2C_Museum_of_the_Imperial_Palace_of_Manchukuo.jpg/1920px-25238-Changchun%2C_Museum_of_the_Imperial_Palace_of_Manchukuo.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/25238-Changchun%2C_Museum_of_the_Imperial_Palace_of_Manchukuo.jpg/960px-25238-Changchun%2C_Museum_of_the_Imperial_Palace_of_Manchukuo.jpg',
     alt: '吉林长春伪满皇宫博物院建筑实景',
     credit: 'xiquinhosilva / Wikimedia Commons',
     license: 'CC BY 2.0',
@@ -209,7 +209,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'heilongjiang-saint-sophia': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/%E5%93%88%E5%B0%94%E6%BB%A8%E5%9C%A3%E7%B4%A2%E8%8F%B2%E4%BA%9A%E6%95%99%E5%A0%82%E4%BE%A7%E9%9D%A2%E4%BB%B0%E8%A7%86%E5%9B%BE.jpg/1920px-%E5%93%88%E5%B0%94%E6%BB%A8%E5%9C%A3%E7%B4%A2%E8%8F%B2%E4%BA%9A%E6%95%99%E5%A0%82%E4%BE%A7%E9%9D%A2%E4%BB%B0%E8%A7%86%E5%9B%BE.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/%E5%93%88%E5%B0%94%E6%BB%A8%E5%9C%A3%E7%B4%A2%E8%8F%B2%E4%BA%9A%E6%95%99%E5%A0%82%E4%BE%A7%E9%9D%A2%E4%BB%B0%E8%A7%86%E5%9B%BE.jpg/960px-%E5%93%88%E5%B0%94%E6%BB%A8%E5%9C%A3%E7%B4%A2%E8%8F%B2%E4%BA%9A%E6%95%99%E5%A0%82%E4%BE%A7%E9%9D%A2%E4%BB%B0%E8%A7%86%E5%9B%BE.jpg',
     alt: '黑龙江哈尔滨圣索菲亚教堂侧面仰视实景',
     credit: 'Steve Zhang / Wikimedia Commons',
     license: 'CC0',
@@ -218,7 +218,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'hong-kong-tai-kwun': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dc/Tai_Kwun_Police_Headquarters_Block_201806.jpg/1920px-Tai_Kwun_Police_Headquarters_Block_201806.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dc/Tai_Kwun_Police_Headquarters_Block_201806.jpg/960px-Tai_Kwun_Police_Headquarters_Block_201806.jpg',
     alt: '香港大馆前中区警署建筑实景',
     credit: 'Wpcpey / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -227,7 +227,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'macau-ruins-of-saint-paul': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Macau_-_Ruins_of_Saint_Paul%27s_%28Ank_Kumar%29_01.jpg/1920px-Macau_-_Ruins_of_Saint_Paul%27s_%28Ank_Kumar%29_01.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5f/Macau_-_Ruins_of_Saint_Paul%27s_%28Ank_Kumar%29_01.jpg/960px-Macau_-_Ruins_of_Saint_Paul%27s_%28Ank_Kumar%29_01.jpg',
     alt: '澳门大三巴牌坊立面与台阶广场实景',
     credit: 'Ank Kumar / Wikimedia Commons',
     license: 'CC BY-SA 4.0',
@@ -236,7 +236,7 @@ export const verifiedHeritageImages: Record<string, BuildingImage> = {
     kind: 'photo',
   },
   'taiwan-lungshan-temple': {
-    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Taipei_Taiwan_Mengjia-Longshan-Temple-00.jpg/1920px-Taipei_Taiwan_Mengjia-Longshan-Temple-00.jpg',
+    src: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Taipei_Taiwan_Mengjia-Longshan-Temple-00.jpg/960px-Taipei_Taiwan_Mengjia-Longshan-Temple-00.jpg',
     alt: '台北艋舺龙山寺庙宇建筑实景',
     credit: 'CEphoto, Uwe Aranas / Wikimedia Commons',
     license: 'CC BY-SA 3.0',

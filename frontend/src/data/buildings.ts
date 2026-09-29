@@ -1,6 +1,6 @@
 import type { Building, ScenicPoint } from '../types/building'
 import { nationalSeedBuildings } from './nationalSeed'
-import { building3dAssets, modelCandidateUrl, resolveModelMetadata } from './building3dAssets'
+import { building3dAssets, catalogGeneratedAsset, modelCandidateUrl, resolveModelMetadata } from './building3dAssets'
 
 const commonsImage = (file: string, width = 1600) =>
   `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`
@@ -412,8 +412,24 @@ const inlineBuildings: Building[] = [
  * keeps an iframe only when its own URL has been reviewed; otherwise it gets
  * a search link and an honest pending state instead of a different building.
  */
-function resolveScenicPoint(point: ScenicPoint): ScenicPoint {
-  const asset = building3dAssets[point.id]
+function resolveScenicPoint(point: ScenicPoint, parentModel: Building['model']): ScenicPoint {
+  if (point.useParentModel) {
+    return {
+      ...point,
+      provider: parentModel.provider,
+      assetStatus: parentModel.assetStatus,
+      assetUrl: parentModel.assetUrl,
+      manifestUrl: parentModel.manifestUrl,
+      embedUrl: parentModel.embedUrl ?? point.embedUrl,
+      sourceUrl: parentModel.sourceUrl ?? point.sourceUrl,
+      credit: parentModel.credit ?? point.credit,
+      candidateUrl: parentModel.candidateUrl ?? point.candidateUrl,
+      embedSource: parentModel.source ?? point.embedSource,
+    }
+  }
+  const curatedAsset = building3dAssets[point.id]
+  const shouldUseGenerated = !point.useParentModel && !point.embedUrl && (!curatedAsset || curatedAsset.provider === 'pending')
+  const asset = shouldUseGenerated ? catalogGeneratedAsset(point.id, point.name, point.modelKind) : curatedAsset
   if (!asset) {
     return {
       ...point,
@@ -429,6 +445,8 @@ function resolveScenicPoint(point: ScenicPoint): ScenicPoint {
     ...point,
     provider: asset.provider,
     assetStatus: asset.status,
+    assetUrl: asset.assetUrl ?? point.assetUrl,
+    manifestUrl: asset.manifestUrl ?? point.manifestUrl,
     embedUrl: asset.embedUrl ?? point.embedUrl,
     embedSource: asset.notes ? `${asset.credit ?? '第三方模型'} · ${asset.notes}` : point.embedSource,
     sourceUrl: asset.sourceUrl ?? point.sourceUrl,
@@ -438,11 +456,12 @@ function resolveScenicPoint(point: ScenicPoint): ScenicPoint {
 }
 
 function externalizeBuilding(building: Building): Building {
+  const model = resolveModelMetadata(building.id, building.model)
   return {
     ...building,
-    model: resolveModelMetadata(building.id, building.model),
+    model,
     scenic: building.scenic
-      ? { ...building.scenic, points: building.scenic.points.map(resolveScenicPoint) }
+      ? { ...building.scenic, points: building.scenic.points.map((point) => resolveScenicPoint(point, model)) }
       : undefined,
   }
 }

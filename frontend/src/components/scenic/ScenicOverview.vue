@@ -41,6 +41,7 @@ function markerIcon(active: boolean) {
 
 function selectPoint(point: ScenicPoint) {
   selectedId.value = point.id
+  emit('select', point)
   const coordinates = point.coordinates
   if (map && coordinates) map.flyTo([coordinates[1], coordinates[0]], Math.max(map.getZoom(), 16), { duration: 0.65 })
   markers.forEach((marker) => marker.setIcon(markerIcon(marker.options.title === point.name)))
@@ -112,15 +113,18 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 <template>
   <section class="scenic-overview">
     <div class="scenic-overview-head"><div><span class="eyebrow scenic-eyebrow">LIVE MAP / {{ isSinglePoint ? 'BUILDING LOCATION' : 'HERITAGE SITE' }}</span><h2>{{ title }}</h2><p>{{ subtitle }}</p></div><div class="scenic-mode"><span class="mode-dot" /> 真实地理底图 <span class="mode-separator">·</span> {{ isSinglePoint ? '单体位置已载入' : points.length + ' 个节点已载入' }}</div></div>
-    <div class="scenic-stage">
-      <div ref="mapElement" class="map-canvas" aria-label="景区真实地理地图" />
-      <div class="map-vignette" /><div class="map-scanline" />
-      <div class="stage-compass"><Navigation :size="15" /><span>N</span></div>
-      <button type="button" class="map-reset" title="回到景区范围" @click="resetMap"><LocateFixed :size="13" /> 归位</button>
-      <div v-if="mapError" class="map-error"><MapIcon :size="14" /> 底图加载较慢，请检查网络后重试。</div>
-      <div class="stage-meta"><span><MapIcon :size="13" /> {{ title }}</span><span>{{ coordinateLabel }}</span></div>
+    <div class="scenic-workspace" :class="{ 'has-viewer': Boolean($slots.viewer) }">
+      <div class="scenic-stage">
+        <div ref="mapElement" class="map-canvas" aria-label="景区真实地理地图" />
+        <div class="map-vignette" /><div class="map-scanline" />
+        <div class="stage-compass"><Navigation :size="15" /><span>N</span></div>
+        <button type="button" class="map-reset" title="回到景区范围" @click="resetMap"><LocateFixed :size="13" /> 归位</button>
+        <div v-if="mapError" class="map-error"><MapIcon :size="14" /> 底图加载较慢，请检查网络后重试。</div>
+        <div class="stage-meta"><span><MapIcon :size="13" /> {{ title }}</span><span>{{ coordinateLabel }}</span></div>
+      </div>
+      <div v-if="$slots.viewer" class="scenic-viewer-slot"><slot name="viewer" /></div>
     </div>
-    <div class="scenic-detail"><div class="scenic-detail-index">0{{ points.findIndex((item) => item.id === selectedId) + 1 }}</div><div class="scenic-detail-copy"><div class="scenic-detail-kicker">{{ selected?.status }} · {{ selected?.subtitle }}</div><h3>{{ selected?.name }}</h3><p>{{ selected?.description }}</p></div><button type="button" class="scenic-enter" :disabled="!selected" @click="selected && emit('select', selected)">{{ isSinglePoint ? '进入 3D' : '进入空间' }} <ArrowRight :size="15" /></button></div>
+    <div class="scenic-detail"><div class="scenic-detail-index">0{{ points.findIndex((item) => item.id === selectedId) + 1 }}</div><div class="scenic-detail-copy"><div class="scenic-detail-kicker">{{ selected?.status }} · {{ selected?.subtitle }}</div><h3>{{ selected?.name }}</h3><p>{{ selected?.description }}</p></div><button type="button" class="scenic-enter" :disabled="!selected" @click="selected && emit('select', selected)">{{ $slots.viewer ? '同步 3D 小窗' : (isSinglePoint ? '进入 3D' : '进入空间') }} <ArrowRight :size="15" /></button></div>
     <div class="scenic-legend"><span><i class="legend-ring" /> 可进入的 3D 展项</span><span><i class="legend-line" /> 真实道路与河流</span><span><LocateFixed :size="12" /> {{ isSinglePoint ? '点击地图点位进入单体展示' : '点击地图点位查看历史介绍' }}</span><span class="map-attribution-note">地图 © OpenStreetMap contributors</span></div>
   </section>
 </template>
@@ -134,7 +138,10 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 .scenic-mode { color: #7f756b; font-size: 10px; letter-spacing: .09em; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 .mode-dot { width: 6px; height: 6px; border-radius: 50%; background: #54a69c; box-shadow: 0 0 0 4px #d7e8e2; }
 .mode-separator { color: #c1b4a5; }
+.scenic-workspace { display: block; }
+.scenic-workspace.has-viewer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); gap: 12px; align-items: stretch; padding: 10px; border: 1px solid #c6beb0; background: #eee7d9; }
 .scenic-stage { height: 410px; position: relative; overflow: hidden; background: #d8d1c3; border: 1px solid #c6beb0; }
+.scenic-workspace.has-viewer .scenic-stage { height: 510px; }
 .map-canvas { position: absolute; inset: 0; z-index: 1; background: #d8d1c3; }
 .map-vignette { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(90deg, rgba(25,39,38,.16), transparent 24%, transparent 78%, rgba(25,39,38,.1)), linear-gradient(0deg, rgba(34,30,25,.2), transparent 26%); mix-blend-mode: multiply; }
 .map-scanline { position: absolute; z-index: 3; top: 0; left: 0; right: 0; height: 1px; pointer-events: none; background: rgba(226,194,137,.52); box-shadow: 0 0 18px rgba(226,194,137,.72); animation: map-scan 5s linear infinite; opacity: .55; }
@@ -143,6 +150,7 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 .map-reset { position: absolute; z-index: 5; top: 20px; left: 20px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(87,98,88,.45); padding: 6px 9px; color: #44584f; background: rgba(247,243,232,.9); font-size: 10px; box-shadow: 0 2px 7px rgba(49,48,41,.12); }
 .map-error { position: absolute; z-index: 5; top: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; color: #7c392f; background: rgba(255,246,229,.94); border: 1px solid rgba(167,62,50,.32); padding: 7px 11px; font-size: 10px; box-shadow: 0 3px 12px rgba(49,35,27,.16); }
 .stage-meta { position: absolute; z-index: 4; bottom: 13px; left: 18px; right: 18px; display: flex; justify-content: space-between; color: #52635b; font-size: 9px; letter-spacing: .06em; text-shadow: 0 1px 3px #fff; }.stage-meta span { display: flex; gap: 5px; align-items: center; }
+.scenic-viewer-slot { height: 510px; pointer-events: auto; }
 .scenic-detail { display: grid; grid-template-columns: 58px 1fr auto; gap: 17px; align-items: center; padding: 22px 0 20px; }.scenic-detail-index { color: #b5a28d; font: 500 32px 'Noto Serif SC', serif; }.scenic-detail-kicker { color: #a73e32; font-size: 10px; letter-spacing: .11em; }.scenic-detail h3 { font: 600 21px 'Noto Serif SC', serif; margin: 4px 0 6px; }.scenic-detail p { color: #776e64; font-size: 12px; line-height: 1.7; margin: 0; max-width: 600px; }.scenic-enter { display: inline-flex; gap: 7px; align-items: center; color: #fff7eb; background: #a73e32; border: 0; padding: 12px 15px; font-size: 11px; white-space: nowrap; }.scenic-enter:hover { background: #823127; }.scenic-enter:disabled { opacity: .55; cursor: not-allowed; }
 .scenic-legend { border-top: 1px solid #ded6ca; padding: 13px 0; display: flex; gap: 22px; color: #8b8073; font-size: 10px; flex-wrap: wrap; }.scenic-legend span { display: inline-flex; align-items: center; gap: 5px; }.legend-ring { width: 9px; height: 9px; border: 2px solid #a73e32; border-radius: 50%; }.legend-line { width: 18px; border-top: 1px dashed #a73e32; }.map-attribution-note { margin-left: auto; color: #999083; }
 :deep(.leaflet-control-attribution) { font: 9px/1.35 Arial, sans-serif; background: rgba(245, 240, 229, .86); color: #726b5f; }
@@ -158,5 +166,6 @@ onBeforeUnmount(() => { map?.remove(); map = undefined; tileLayer = undefined; t
 :deep(.heritage-marker-core) { transform: rotate(45deg); font-size: 15px; }
 :deep(.heritage-marker.is-active) { background: #293f41; color: #e9c991; transform: rotate(-45deg) scale(1.18); box-shadow: 0 5px 16px rgba(30,44,43,.4), 0 0 0 7px rgba(84,166,156,.26); }
 @keyframes map-scan { from { transform: translateY(0); } to { transform: translateY(410px); } }
-@media (max-width: 700px) { .scenic-overview-head { display: block; }.scenic-mode { margin-top: 15px; }.scenic-stage { height: 350px; }.scenic-detail { grid-template-columns: 40px 1fr; }.scenic-enter { grid-column: 2; justify-self: start; }.stage-meta span:last-child { display: none; }.map-attribution-note { margin-left: 0; } }
+@media (max-width: 1020px) { .scenic-workspace.has-viewer { grid-template-columns: 1fr; }.scenic-workspace.has-viewer .scenic-stage { height: 420px; }.scenic-viewer-slot { height: 360px; } }
+@media (max-width: 700px) { .scenic-overview-head { display: block; }.scenic-mode { margin-top: 15px; }.scenic-stage { height: 350px; }.scenic-workspace.has-viewer .scenic-stage { height: 360px; }.scenic-viewer-slot { height: 340px; }.scenic-detail { grid-template-columns: 40px 1fr; }.scenic-enter { grid-column: 2; justify-self: start; }.stage-meta span:last-child { display: none; }.map-attribution-note { margin-left: 0; } }
 </style>

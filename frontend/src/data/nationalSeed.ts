@@ -1,6 +1,7 @@
 import type { Building } from '../types/building'
 import { resolveModelMetadata } from './building3dAssets'
 import { verifiedHeritageImages } from './heritageImages'
+import { wikimediaHeritageImages } from './wikimediaHeritageImages'
 
 type SeedInput = Pick<Building,
   | 'id'
@@ -27,12 +28,14 @@ type SeedInput = Pick<Building,
 const sharedTags = ['中国建筑', '民生建筑', '公共空间', '全国索引', '真实资料']
 
 function seed(input: SeedInput): Building {
+  const image = input.image ?? verifiedHeritageImages[input.id] ?? wikimediaHeritageImages[input.id]
+
   return {
     ...input,
-    image: input.image ?? verifiedHeritageImages[input.id],
+    image,
     model: resolveModelMetadata(input.id, input.model),
     tags: Array.from(new Set([...input.tags, ...sharedTags])),
-    sources: [{ label: verifiedHeritageImages[input.id] ? '全国建筑索引资料 · 真实公开影像已接入' : '全国建筑索引资料 · 影像来源待核验', kind: '项目记录' }],
+    sources: [{ label: image ? '全国建筑索引资料 · 真实公开影像已接入' : '全国建筑索引资料 · 影像来源待核验', kind: '项目记录' }],
   }
 }
 

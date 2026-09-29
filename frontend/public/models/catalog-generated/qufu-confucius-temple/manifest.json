@@ -1,0 +1,38 @@
+{
+  "modelId": "qufu-confucius-temple",
+  "title": "曲阜孔庙",
+  "kind": "temple",
+  "version": "0.1.0-catalog-generated",
+  "assetStatus": "项目自动生成形制 GLB",
+  "source": "ARCHIVA 项目按建筑类型与条目名称生成的可交互形制模型，用于补齐 3D 展示入口；非现场测绘。",
+  "license": "项目展示模型；正式出版需替换为授权扫描、摄影测量或精修模型。",
+  "lod": [
+    {
+      "level": "medium",
+      "url": "/models/catalog-generated/qufu-confucius-temple/model-medium.glb",
+      "bytes": 30620
+    }
+  ],
+  "textures": {
+    "format": "embedded-materials",
+    "basePath": "/models/catalog-generated/qufu-confucius-temple/",
+    "variants": {
+      "mobile": "medium",
+      "desktop": "medium",
+      "detail": "medium"
+    }
+  },
+  "defaultCamera": {
+    "position": [
+      8.5,
+      6.2,
+      9.5
+    ],
+    "target": [
+      0,
+      1.2,
+      0
+    ],
+    "fov": 34
+  }
+}
