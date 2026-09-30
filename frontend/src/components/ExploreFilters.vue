@@ -8,6 +8,7 @@ const explore = useExploreStore()
 const root = ref<HTMLElement>()
 const trigger = ref<HTMLButtonElement>()
 const panel = ref<HTMLElement>()
+const filterOptions = ref<HTMLElement>()
 const isOpen = ref(false)
 const draftRegion = ref(explore.activeRegion)
 const draftCity = ref(explore.activeCity)
@@ -55,6 +56,7 @@ async function togglePanel() {
   positionPanel()
   isOpen.value = true
   await nextTick()
+  if (filterOptions.value) filterOptions.value.scrollTop = 0
   panel.value?.focus({ preventScroll: true })
 }
 
@@ -75,7 +77,9 @@ function applyFilters() {
 }
 
 function onOutsidePointer(event: PointerEvent) {
-  if (isOpen.value && event.target instanceof Node && !root.value?.contains(event.target)) closePanel(false)
+  if (!isOpen.value || !(event.target instanceof Node)) return
+  const path = event.composedPath()
+  if (!path.includes(root.value as EventTarget)) closePanel(false)
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -85,13 +89,15 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-function onFocusout(event: FocusEvent) {
-  if (isOpen.value && event.relatedTarget instanceof Node && !root.value?.contains(event.relatedTarget)) closePanel(false)
+async function onFocusout() {
+  await nextTick()
+  const activeElement = document.activeElement
+  if (isOpen.value && activeElement instanceof Node && !root.value?.contains(activeElement)) closePanel(false)
 }
 
 function onScroll(event: Event) {
-  // Allow the options to scroll without moving or dismissing the bubble.
-  if (isOpen.value && !(event.target instanceof Node && panel.value?.contains(event.target))) closePanel(false)
+  if (event.target instanceof Node && panel.value?.contains(event.target)) return
+  if (isOpen.value) positionPanel()
 }
 
 onMounted(() => {
@@ -118,36 +124,39 @@ onBeforeUnmount(() => {
       <ChevronDown :size="14" class="filter-chevron" aria-hidden="true" />
     </button>
     <Transition name="filter-bubble">
-      <section v-if="isOpen" id="explore-filter-panel" ref="panel" class="filter-panel" :class="`is-${placement}`" :style="panelStyle" role="dialog" aria-labelledby="filter-title" aria-describedby="filter-description" tabindex="-1">
-        <header class="filter-header">
-          <div><h2 id="filter-title">筛选建筑</h2><p id="filter-description">选好条件，探索感兴趣的建筑</p></div>
-          <button type="button" class="filter-close" aria-label="关闭筛选" @click="closePanel()"><X :size="18" aria-hidden="true" /></button>
-        </header>
-        <div class="filter-options">
-          <div class="filter-group" role="group" aria-labelledby="filter-region-label">
-            <h3 id="filter-region-label">省份</h3>
-            <div class="filter-chips">
-              <button v-for="region in ['全部', ...explore.regions]" :key="region" type="button" :class="{ selected: draftRegion === region }" :aria-pressed="draftRegion === region" @click="selectRegion(region)"><Check v-if="draftRegion === region" :size="13" aria-hidden="true" />{{ region }}</button>
+      <div v-if="isOpen" class="filter-layer">
+        <div class="filter-scrim" aria-hidden="true" @click="closePanel()" />
+        <section id="explore-filter-panel" ref="panel" class="filter-panel" :class="`is-${placement}`" :style="panelStyle" role="dialog" aria-modal="true" aria-labelledby="filter-title" aria-describedby="filter-description" tabindex="-1">
+          <header class="filter-header">
+            <div><h2 id="filter-title">筛选建筑</h2><p id="filter-description">选好条件后再应用，列表和地图会同步更新。</p></div>
+            <button type="button" class="filter-close" aria-label="关闭筛选" @click="closePanel()"><X :size="18" aria-hidden="true" /></button>
+          </header>
+          <div ref="filterOptions" class="filter-options">
+            <div class="filter-group" role="group" aria-labelledby="filter-region-label">
+              <h3 id="filter-region-label">省份</h3>
+              <div class="filter-chips">
+                <button v-for="region in ['全部', ...explore.regions]" :key="region" type="button" :class="{ selected: draftRegion === region }" :aria-pressed="draftRegion === region" @click="selectRegion(region)"><Check v-if="draftRegion === region" :size="13" aria-hidden="true" />{{ region }}</button>
+              </div>
+            </div>
+            <div class="filter-group" role="group" aria-labelledby="filter-city-label">
+              <h3 id="filter-city-label">城市</h3>
+              <div class="filter-chips">
+                <button v-for="city in ['全部', ...cities]" :key="city" type="button" :class="{ selected: draftCity === city }" :aria-pressed="draftCity === city" @click="draftCity = city"><Check v-if="draftCity === city" :size="13" aria-hidden="true" />{{ city }}</button>
+              </div>
+            </div>
+            <div class="filter-group" role="group" aria-labelledby="filter-category-label">
+              <h3 id="filter-category-label">建筑类型</h3>
+              <div class="filter-chips">
+                <button v-for="category in explore.categories" :key="category" type="button" :class="{ selected: draftCategory === category }" :aria-pressed="draftCategory === category" @click="draftCategory = category"><Check v-if="draftCategory === category" :size="13" aria-hidden="true" />{{ category }}</button>
+              </div>
             </div>
           </div>
-          <div class="filter-group" role="group" aria-labelledby="filter-city-label">
-            <h3 id="filter-city-label">城市</h3>
-            <div class="filter-chips">
-              <button v-for="city in ['全部', ...cities]" :key="city" type="button" :class="{ selected: draftCity === city }" :aria-pressed="draftCity === city" @click="draftCity = city"><Check v-if="draftCity === city" :size="13" aria-hidden="true" />{{ city }}</button>
-            </div>
-          </div>
-          <div class="filter-group" role="group" aria-labelledby="filter-category-label">
-            <h3 id="filter-category-label">建筑类型</h3>
-            <div class="filter-chips">
-              <button v-for="category in explore.categories" :key="category" type="button" :class="{ selected: draftCategory === category }" :aria-pressed="draftCategory === category" @click="draftCategory = category"><Check v-if="draftCategory === category" :size="13" aria-hidden="true" />{{ category }}</button>
-            </div>
-          </div>
-        </div>
-        <footer class="filter-footer">
-          <button type="button" class="filter-reset" @click="resetDraft"><RotateCcw :size="14" aria-hidden="true" />重置</button>
-          <button type="button" class="filter-confirm" @click="applyFilters">确定<Check :size="16" aria-hidden="true" /></button>
-        </footer>
-      </section>
+          <footer class="filter-footer">
+            <button type="button" class="filter-reset" @click="resetDraft"><RotateCcw :size="14" aria-hidden="true" />重置</button>
+            <button type="button" class="filter-confirm" @click="applyFilters">应用筛选<Check :size="16" aria-hidden="true" /></button>
+          </footer>
+        </section>
+      </div>
     </Transition>
   </div>
 </template>
@@ -160,7 +169,9 @@ onBeforeUnmount(() => {
 .filter-chevron { transition: transform .18s ease; }
 .is-open .filter-chevron { transform: rotate(180deg); }
 .filter-count { display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 4px; border-radius: 50%; background: var(--navy); color: white; font-size: 10px; }
-.filter-panel { position: fixed; z-index: 30; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 20px 60px color-mix(in srgb, var(--ink) 16%, transparent), 0 4px 14px color-mix(in srgb, var(--ink) 5%, transparent); outline: none; transform-origin: var(--arrow-position) top; }
+.filter-layer { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.filter-scrim { position: absolute; inset: 0; pointer-events: auto; background: rgba(20, 43, 54, .16); backdrop-filter: blur(1px); }
+.filter-panel { position: fixed; z-index: 31; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 20px 60px color-mix(in srgb, var(--ink) 16%, transparent), 0 4px 14px color-mix(in srgb, var(--ink) 5%, transparent); outline: none; transform-origin: var(--arrow-position) top; pointer-events: auto; }
 .filter-panel::before { position: absolute; content: ''; left: var(--arrow-position); top: -7px; width: 12px; height: 12px; background: var(--paper); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
 .filter-panel.is-above { transform-origin: var(--arrow-position) bottom; }
 .filter-panel.is-above::before { top: auto; bottom: -7px; transform: translateX(-50%) rotate(225deg); }
@@ -169,7 +180,7 @@ onBeforeUnmount(() => {
 .filter-header p { margin: 7px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.5; }
 .filter-close { display: grid; place-items: center; width: 44px; height: 44px; margin: -8px -10px 0 0; flex-shrink: 0; color: var(--ink-soft); background: transparent; border: 0; border-radius: 50%; }
 .filter-close:hover { background: var(--paper-muted); color: var(--ink); }
-.filter-options { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 24px 8px; scrollbar-width: thin; }
+.filter-options { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 24px 10px; scrollbar-width: thin; scroll-padding-block: 12px; }
 .filter-group { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
 .filter-group h3 { margin: 0; padding-top: 12px; color: var(--ink-soft); font-size: 12px; font-weight: 500; line-height: 20px; }
 .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -183,18 +194,22 @@ onBeforeUnmount(() => {
 .filter-confirm { min-width: 126px; color: var(--paper); background: var(--navy); border: 1px solid var(--navy); }
 .filter-confirm:hover { background: var(--navy-deep); }
 button:focus-visible { outline: 2px solid var(--jade); outline-offset: 3px; }
-.filter-bubble-enter-active, .filter-bubble-leave-active { transition: opacity .18s ease, transform .18s ease; }
-.filter-bubble-enter-from, .filter-bubble-leave-to { opacity: 0; transform: translateY(-4px) scale(.98); }
-.filter-bubble-enter-from.is-above, .filter-bubble-leave-to.is-above { transform: translateY(4px) scale(.98); }
+.filter-bubble-enter-active, .filter-bubble-leave-active { transition: opacity .18s ease; }
+.filter-bubble-enter-active .filter-panel, .filter-bubble-leave-active .filter-panel { transition: opacity .18s ease, transform .18s ease; }
+.filter-bubble-enter-from, .filter-bubble-leave-to { opacity: 0; }
+.filter-bubble-enter-from .filter-panel, .filter-bubble-leave-to .filter-panel { opacity: 0; transform: translateY(-4px) scale(.98); }
+.filter-bubble-enter-from .filter-panel.is-above, .filter-bubble-leave-to .filter-panel.is-above { transform: translateY(4px) scale(.98); }
 @media (max-width: 640px) {
   .explore-filter { gap: 10px; flex: 1; }
   .filter-summary { font-size: 11px; }
   .filter-header { padding: 18px 18px 16px; }
-  .filter-options { padding: 0 18px 4px; }
+  .filter-options { padding: 4px 18px 6px; }
   .filter-group { grid-template-columns: 1fr; gap: 10px; padding: 16px 0; }
   .filter-group h3 { padding-top: 0; }
   .filter-chips button { padding-inline: 13px; }
   .filter-footer { padding: 12px 18px; }
+  .filter-scrim { background: rgba(20, 43, 54, .26); }
+  .filter-panel { left: 16px !important; right: 16px; width: auto !important; max-height: min(72dvh, 580px) !important; }
 }
 @media (max-height: 500px) {
   .filter-header { padding-block: 12px; }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ArrowLeft, Crosshair, Layers3, MapPin, RotateCcw, Search, X } from 'lucide-vue-next'
+import { ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Layers3, MapPin, RotateCcw, Search, X } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -19,20 +19,34 @@ type ChinaGeoJson = { type: 'FeatureCollection'; features: ChinaFeature[] }
 
 const router = useRouter()
 const canvasElement = ref<HTMLCanvasElement | null>(null)
+const regionRail = ref<HTMLDivElement | null>(null)
 const selectedId = ref<string | null>(null)
 const query = ref('')
+const activeRegion = ref('全部')
 const showLabels = ref(true)
 const mapMode = ref<'terrain' | 'network'>('terrain')
 const isLoading = ref(true)
 const mapLoadNote = ref('')
 
 const selectedBuilding = computed(() => buildings.find((building) => building.id === selectedId.value) ?? null)
+const regionOptions = computed(() => {
+  const regions = Array.from(new Set(buildings.map((building) => building.region).filter((region): region is string => Boolean(region))))
+  return [
+    { name: '全部', count: buildings.length },
+    ...regions.map((name) => ({ name, count: buildings.filter((building) => building.region === name).length })),
+  ]
+})
 const filteredBuildings = computed(() => {
   const value = query.value.trim().toLowerCase()
-  if (!value) return buildings
-  return buildings.filter((building) => [building.name, building.region, building.location, building.category].some((field) => field?.toLowerCase().includes(value)))
+  return buildings.filter((building) => {
+    const matchesRegion = activeRegion.value === '全部' || building.region === activeRegion.value
+    const matchesQuery = !value || [building.name, building.region, building.location, building.category].some((field) => field?.toLowerCase().includes(value))
+    return matchesRegion && matchesQuery
+  })
 })
 const regionsCount = computed(() => new Set(buildings.map((building) => building.region).filter(Boolean)).size)
+const visibleBuildingIds = computed(() => new Set(filteredBuildings.value.map((building) => building.id)))
+const activeRegionCount = computed(() => filteredBuildings.value.length)
 
 let renderer: THREE.WebGLRenderer | undefined
 let scene: THREE.Scene | undefined
@@ -300,13 +314,16 @@ function buildChinaSurface(data: ChinaGeoJson) {
         const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.075 + (featureIndex % 3) * 0.015, bevelEnabled: false })
         geometry.rotateX(-Math.PI / 2)
         geometry.computeVertexNormals()
+        const baseColor = provincePalette[featureIndex % provincePalette.length]
         const material = new THREE.MeshStandardMaterial({
-          color: provincePalette[featureIndex % provincePalette.length],
+          color: baseColor,
           roughness: 0.82,
           metalness: 0.03,
         })
         const mesh = new THREE.Mesh(geometry, material)
         mesh.name = `province-${feature.properties?.name ?? featureIndex}-${polygonIndex}`
+        mesh.userData.regionName = feature.properties?.name
+        mesh.userData.baseColor = baseColor
         mesh.position.y = -0.015
         mesh.receiveShadow = true
         boundaryGroup?.add(mesh)
@@ -357,6 +374,8 @@ function buildRoutes() {
     const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2)
     const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(32))
     const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: '#dfbf72', transparent: true, opacity: 0.28 }))
+    line.userData.buildingId = building.id
+    line.userData.hubId = hub.id
     networkGroup!.add(line)
   })
   networkGroup.visible = mapMode.value === 'network'
@@ -365,6 +384,14 @@ function buildRoutes() {
 
 function markerColor(building: Building, index: number) {
   return building.accent ?? palette[index % palette.length]
+}
+
+function normalizedRegionName(region?: string) {
+  return (region ?? '').replace(/特别行政区|壮族自治区|回族自治区|维吾尔自治区|自治区|省|市/g, '')
+}
+
+function matchesActiveRegion(region?: string) {
+  return normalizedRegionName(region) === normalizedRegionName(activeRegion.value)
 }
 
 function buildMarkers() {
@@ -442,10 +469,57 @@ function updateLayerVisibility() {
   if (networkGroup) networkGroup.visible = mapMode.value === 'network'
   const relief = terrainGroup?.getObjectByName('terrain-relief')
   if (relief) relief.visible = mapMode.value === 'terrain'
+  updateNetworkVisibility()
+}
+
+function isBuildingVisible(buildingId: string) {
+  return visibleBuildingIds.value.has(buildingId)
+}
+
+function updateNetworkVisibility() {
+  networkGroup?.children.forEach((line) => {
+    const buildingId = line.userData.buildingId as string | undefined
+    const hubId = line.userData.hubId as string | undefined
+    line.visible = activeRegion.value === '全部' || Boolean(buildingId && hubId && isBuildingVisible(buildingId) && isBuildingVisible(hubId))
+  })
+}
+
+function updateProvinceHighlight() {
+  boundaryGroup?.children.forEach((child) => {
+    if (!(child instanceof THREE.Mesh) || !(child.material instanceof THREE.MeshStandardMaterial)) return
+    const isActive = activeRegion.value !== '全部' && matchesActiveRegion(child.userData.regionName)
+    child.material.opacity = activeRegion.value === '全部' ? 1 : isActive ? 1 : 0.34
+    child.material.transparent = activeRegion.value !== '全部'
+    child.material.color.set(isActive ? '#69886c' : child.userData.baseColor ?? provincePalette[0])
+    child.position.y = isActive ? 0.01 : -0.015
+  })
+}
+
+function updateMarkerVisibility() {
+  markerGroup?.children.forEach((child) => {
+    const buildingId = child.userData.buildingId as string | undefined
+    child.visible = Boolean(buildingId && isBuildingVisible(buildingId))
+  })
+  labelGroup?.children.forEach((label) => {
+    const buildingId = label.userData.buildingId as string | undefined
+    label.visible = Boolean(buildingId && isBuildingVisible(buildingId))
+  })
+  if (selectedId.value && !isBuildingVisible(selectedId.value)) {
+    selectedId.value = null
+  }
+  hoveredBuildingId = hoveredBuildingId && isBuildingVisible(hoveredBuildingId) ? hoveredBuildingId : null
+  updateProvinceHighlight()
+  updateNetworkVisibility()
+  highlightSelection()
 }
 
 function updateLabels() {
   labelGroup?.children.forEach((label) => {
+    const buildingId = label.userData.buildingId as string | undefined
+    if (!buildingId || !isBuildingVisible(buildingId)) {
+      label.visible = false
+      return
+    }
     const active = label.userData.buildingId === selectedId.value || label.userData.buildingId === hoveredBuildingId
     label.visible = showLabels.value && (label.userData.priority || active)
   })
@@ -483,7 +557,10 @@ function pickMarker(event: PointerEvent) {
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
   raycaster.setFromCamera(pointer, camera)
-  const hit = raycaster.intersectObjects(markerMeshes, false)[0]
+  const hit = raycaster.intersectObjects(markerMeshes, false).find((entry) => {
+    const buildingId = entry.object.userData.buildingId as string | undefined
+    return Boolean(buildingId && isBuildingVisible(buildingId))
+  })
   return hit?.object.userData.buildingId as string | undefined
 }
 
@@ -514,7 +591,34 @@ function selectBuilding(building: Building) {
   }
 }
 
+function focusBuildings(targetBuildings: Building[]) {
+  if (!camera || !controls) return
+  const points = targetBuildings.filter((building) => building.coordinates?.length === 2).map((building) => project(building.coordinates[0], building.coordinates[1], 0.18))
+  if (!points.length) return
+  const box = new THREE.Box3().setFromPoints(points)
+  const center = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  const spread = Math.max(size.x, size.z, 0.8)
+  const distance = activeRegion.value === '全部' ? 10.4 : Math.min(9.2, Math.max(5.2, spread * 2.2 + 4.2))
+  controls.target.copy(center)
+  camera.position.copy(center.clone().add(new THREE.Vector3(spread * 0.28 + 1.1, distance * 0.72, distance * 0.58)))
+  camera.lookAt(center)
+  controls.update()
+}
+
+function selectRegion(region: string) {
+  if (activeRegion.value === region) return
+  activeRegion.value = region
+  updateMarkerVisibility()
+  if (region === '全部') {
+    focusBuildings(buildings)
+    return
+  }
+  focusBuildings(buildings.filter((building) => building.region === region))
+}
+
 function resetView() {
+  activeRegion.value = '全部'
   selectedId.value = null
   hoveredBuildingId = null
   if (controls && camera) {
@@ -523,6 +627,7 @@ function resetView() {
     camera.lookAt(0, 0, 0)
     controls.update()
   }
+  updateMarkerVisibility()
   highlightSelection()
 }
 
@@ -533,6 +638,10 @@ function enterDetail() {
 function toggleLabels() {
   showLabels.value = !showLabels.value
   updateLabels()
+}
+
+function scrollRegionRail(direction: -1 | 1) {
+  regionRail.value?.scrollBy({ left: direction * 260, behavior: 'smooth' })
 }
 
 async function initScene() {
@@ -585,7 +694,7 @@ async function initScene() {
   buildRoutes()
   buildMarkers()
   updateLayerVisibility()
-  highlightSelection()
+  updateMarkerVisibility()
 
   raycaster = new THREE.Raycaster()
   pointer = new THREE.Vector2()
@@ -615,7 +724,8 @@ async function initScene() {
 }
 
 watch(mapMode, updateLayerVisibility)
-watch(query, () => {
+watch([query, activeRegion], () => {
+  updateMarkerVisibility()
   if (!query.value.trim()) return
   const first = filteredBuildings.value[0]
   if (first) selectBuilding(first)
@@ -651,9 +761,30 @@ onBeforeUnmount(() => {
       <div class="map-list" aria-label="建筑节点列表">
         <button v-for="building in filteredBuildings.slice(0, 8)" :key="building.id" type="button" class="map-list-item" :class="{ active: selectedId === building.id }" @click="selectBuilding(building)"><span class="list-dot" :style="{ background: markerColor(building, buildings.indexOf(building)) }" /><span><strong>{{ building.name }}</strong><small>{{ building.region }} · {{ building.category }}</small></span><MapPin :size="14" /></button>
       </div>
-      <div class="sidebar-foot"><span>{{ regionsCount }} 省级入口 · {{ buildings.length }} 个样本</span><span>本地三维底图</span></div>
+      <div class="sidebar-foot"><span>{{ regionsCount }} 省级入口 · {{ activeRegionCount }} 个当前样本</span><span>本地三维底图</span></div>
     </aside>
     <section class="map-controls" aria-label="地图控制"><button type="button" @click="toggleLabels">{{ showLabels ? '隐藏标注' : '显示标注' }}</button><button type="button" title="重置视角" aria-label="重置视角" @click="resetView"><RotateCcw :size="15" /></button></section>
+    <section class="region-timeline" aria-label="按省份筛选建筑地标">
+      <button class="region-scroll" type="button" title="向左浏览省份" aria-label="向左浏览省份" @click="scrollRegionRail(-1)"><ChevronLeft :size="16" /></button>
+      <div ref="regionRail" class="region-rail" role="listbox" :aria-activedescendant="`region-${activeRegion}`">
+        <button
+          v-for="region in regionOptions"
+          :id="`region-${region.name}`"
+          :key="region.name"
+          type="button"
+          role="option"
+          class="region-chip"
+          :class="{ active: activeRegion === region.name }"
+          :aria-selected="activeRegion === region.name"
+          @click="selectRegion(region.name)"
+        >
+          <span>{{ region.name }}</span>
+          <small>{{ region.count }} 个地标</small>
+        </button>
+      </div>
+      <button class="region-scroll" type="button" title="向右浏览省份" aria-label="向右浏览省份" @click="scrollRegionRail(1)"><ChevronRight :size="16" /></button>
+      <div class="region-readout"><strong>{{ activeRegion }}</strong><span>{{ activeRegionCount }} 个可进入 3D 的建筑节点</span></div>
+    </section>
     <aside v-if="selectedBuilding" class="detail-panel"><button class="detail-close" type="button" aria-label="关闭详情" @click="selectedId = null; highlightSelection()"><X :size="17" /></button><span class="detail-kicker">{{ selectedBuilding.region }} · {{ selectedBuilding.category }}</span><h2>{{ selectedBuilding.name }}</h2><p>{{ selectedBuilding.summary }}</p><dl><div><dt>年代</dt><dd>{{ selectedBuilding.era }}</dd></div><div><dt>位置</dt><dd>{{ selectedBuilding.location }}</dd></div><div><dt>状态</dt><dd>{{ selectedBuilding.status }}</dd></div></dl><button class="detail-action" type="button" @click="enterDetail">查看建筑档案 <ArrowLeft :size="15" /></button></aside>
     <div v-if="isLoading" class="map-loading">正在加载全国建筑空间...</div>
     <div v-if="mapLoadNote" class="map-load-note">{{ mapLoadNote }}</div>
@@ -669,7 +800,7 @@ onBeforeUnmount(() => {
 .map-header { position: absolute; z-index: 3; top: 0; left: 0; right: 0; height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 34px; border-bottom: 1px solid rgba(218, 191, 135, .16); background: linear-gradient(180deg, rgba(6, 24, 29, .88), rgba(6, 24, 29, .24)); backdrop-filter: blur(12px); }
 .map-back { min-height: 44px; display: inline-flex; align-items: center; gap: 9px; padding: 8px 0; color: rgba(248, 240, 222, .78); border: 0; background: transparent; font: 12px inherit; cursor: pointer; }
 .map-back:hover { color: #d8b170; }
-.map-back:focus-visible, .map-filters button:focus-visible, .map-controls button:focus-visible, .map-list-item:focus-visible, .detail-action:focus-visible, .detail-close:focus-visible { outline: 2px solid rgba(231, 195, 127, .82); outline-offset: 3px; }
+.map-back:focus-visible, .map-filters button:focus-visible, .map-controls button:focus-visible, .map-list-item:focus-visible, .detail-action:focus-visible, .detail-close:focus-visible, .region-chip:focus-visible, .region-scroll:focus-visible { outline: 2px solid rgba(231, 195, 127, .82); outline-offset: 3px; }
 .map-brand { display: flex; align-items: center; gap: 12px; position: absolute; left: 50%; transform: translateX(-50%); }
 .map-brand-mark { width: 28px; height: 24px; display: inline-grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 .map-brand-mark::before, .map-brand-mark::after { content: ''; background: linear-gradient(180deg, #e2bd75, #b88642); }
@@ -697,8 +828,20 @@ onBeforeUnmount(() => {
 .map-list-item small { display: block; margin-top: 3px; color: rgba(239, 228, 205, .56); font-size: 10px; }
 .map-list-item > svg { color: rgba(239, 228, 205, .46); }
 .sidebar-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 13px; border-top: 1px solid rgba(220, 199, 161, .13); color: rgba(239, 228, 205, .48); font-size: 10px; }
-.map-controls { position: absolute; z-index: 3; right: 34px; bottom: 42px; display: flex; gap: 8px; }
+.map-controls { position: absolute; z-index: 3; right: 34px; bottom: 126px; display: flex; gap: 8px; }
 .map-controls button:last-child { width: 44px; justify-content: center; padding: 0; }
+.region-timeline { position: absolute; z-index: 4; left: 50%; bottom: 26px; width: min(760px, calc(100vw - 430px)); min-width: 430px; transform: translateX(-50%); display: grid; grid-template-columns: 38px minmax(0, 1fr) 38px auto; align-items: center; gap: 9px; padding: 10px; border: 1px solid rgba(218, 191, 135, .2); background: linear-gradient(180deg, rgba(8, 30, 35, .88), rgba(6, 23, 28, .78)); box-shadow: 0 18px 52px rgba(1, 12, 16, .35); backdrop-filter: blur(16px); }
+.region-scroll { width: 38px; height: 44px; display: grid; place-items: center; color: rgba(246, 235, 210, .72); border: 1px solid rgba(218, 191, 135, .18); background: rgba(11, 42, 48, .82); cursor: pointer; }
+.region-scroll:hover { color: #f0ca84; border-color: rgba(218, 191, 135, .52); }
+.region-rail { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scroll-behavior: smooth; scrollbar-width: none; }
+.region-rail::-webkit-scrollbar { display: none; }
+.region-chip { flex: 0 0 96px; min-height: 48px; display: grid; align-content: center; gap: 3px; padding: 6px 10px; color: rgba(239, 228, 205, .64); text-align: left; border: 1px solid rgba(220, 199, 161, .14); background: rgba(9, 35, 41, .62); cursor: pointer; transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease; }
+.region-chip:hover, .region-chip.active { color: #fff5db; border-color: rgba(227, 191, 119, .58); background: rgba(48, 92, 88, .8); }
+.region-chip.active { transform: translateY(-2px); box-shadow: inset 0 -2px 0 #d6ac6a, 0 8px 22px rgba(5, 20, 23, .28); }
+.region-chip span { font: 600 13px 'Noto Serif SC', serif; }
+.region-chip small { color: rgba(179, 214, 205, .7); font-size: 10px; }
+.region-readout { min-width: 132px; padding-left: 4px; color: rgba(239, 228, 205, .54); font-size: 10px; line-height: 1.45; }
+.region-readout strong { display: block; color: #f0ca84; font: 600 15px 'Noto Serif SC', serif; }
 .detail-panel { position: absolute; z-index: 4; right: 34px; top: 50%; transform: translateY(-50%); width: min(330px, calc(100vw - 68px)); padding: 26px 25px 24px; color: #18383c; background: rgba(247, 240, 224, .96); border: 1px solid rgba(218, 177, 105, .56); box-shadow: 0 24px 70px rgba(2, 17, 20, .38); }
 .detail-close { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; display: grid; place-items: center; color: #61716d; border: 0; background: transparent; cursor: pointer; }
 .detail-kicker { color: #a56f3e; font-size: 10px; font-weight: 700; letter-spacing: .15em; }
@@ -710,7 +853,7 @@ onBeforeUnmount(() => {
 .detail-panel dd { margin: 0; color: #284c4c; text-align: right; }
 .detail-action { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; color: #f8f0df; border: 0; background: #a4543e; font: 12px inherit; cursor: pointer; }
 .detail-action svg { transform: rotate(180deg); }
-.map-hint { position: absolute; z-index: 3; right: 35px; bottom: 18px; color: rgba(239, 228, 205, .44); font-size: 10px; letter-spacing: .08em; }
+.map-hint { position: absolute; z-index: 3; right: 35px; bottom: 104px; color: rgba(239, 228, 205, .44); font-size: 10px; letter-spacing: .08em; }
 .map-loading { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; color: #dcb776; background: #071d22; font: 13px 'Noto Serif SC', serif; }
 .map-load-note { position: absolute; z-index: 5; right: 34px; top: 92px; max-width: 300px; padding: 10px 12px; color: #f4e1bd; border: 1px solid rgba(224, 184, 112, .32); background: rgba(8, 31, 36, .88); font-size: 12px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -723,8 +866,12 @@ onBeforeUnmount(() => {
   .map-sidebar h1 { margin-top: 14px; font-size: 31px; }
   .sidebar-intro { max-width: 262px; margin-bottom: 14px; font-size: 12px; }
   .map-list { max-height: 38vh; flex: none; }
-  .detail-panel { right: 17px; left: 17px; top: auto; bottom: 25px; width: auto; transform: none; }
-  .map-controls { right: 17px; bottom: 18px; }
+  .detail-panel { right: 17px; left: 17px; top: auto; bottom: 88px; width: auto; transform: none; }
+  .map-controls { right: 17px; bottom: 102px; }
+  .region-timeline { left: 17px; right: 17px; bottom: 17px; width: auto; min-width: 0; transform: none; grid-template-columns: 34px minmax(0, 1fr) 34px; }
+  .region-scroll { width: 34px; height: 42px; }
+  .region-readout { display: none; }
+  .region-chip { flex-basis: 86px; min-height: 44px; }
   .map-hint { display: none; }
 }
 </style>

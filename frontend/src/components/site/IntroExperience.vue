@@ -20,16 +20,14 @@ const stages = [
 const currentStage = computed(() => stages[stage.value])
 const isReady = computed(() => stage.value === stages.length - 1)
 
-function finish() {
-  if (!isReady.value || isFinishing.value) return
+function finish(delay = 320) {
+  if (isFinishing.value) return
   isFinishing.value = true
-  window.setTimeout(() => emit('complete'), 520)
+  window.setTimeout(() => emit('complete'), delay)
 }
 
 function skip() {
-  if (isFinishing.value) return
-  isFinishing.value = true
-  window.setTimeout(() => emit('complete'), 180)
+  finish(160)
 }
 
 onMounted(() => {
@@ -88,9 +86,9 @@ onBeforeUnmount(() => {
             <p class="intro-copy-lead">跨越地域与年代，<br />把中国建筑读成一张可以游览的图谱。</p>
             <div class="intro-copy-rule" />
             <p class="intro-status"><span class="status-dot" />{{ currentStage.copy }}<span class="typing-cursor" aria-hidden="true" /></p>
-            <button class="intro-enter" :class="{ ready: isReady }" type="button" :disabled="!isReady" :aria-label="isReady ? '进入建筑图谱' : '建筑空间索引准备中'" @click="finish">
+            <button class="intro-enter ready" :class="{ loading: !isReady }" type="button" aria-label="进入建筑图谱" @click="finish()">
               <span class="intro-enter-icon"><MousePointer2 :size="16" /></span>
-              <span><small>{{ isReady ? 'NEXT / 开始浏览' : 'SYSTEM / 读取中' }}</small><strong>{{ isReady ? '进入全国图谱' : '空间索引中' }}</strong></span>
+              <span><small>{{ isReady ? 'NEXT / 开始浏览' : 'SKIP / 立即进入' }}</small><strong>{{ isReady ? '进入全国图谱' : '直接进入图谱' }}</strong></span>
               <ArrowRight :size="18" />
             </button>
           </div>
@@ -135,7 +133,7 @@ onBeforeUnmount(() => {
             <span>{{ item.index }}</span><i /><strong>{{ item.label }}</strong>
           </div>
         </div>
-        <span class="intro-hint">{{ isReady ? '点击中心按钮继续' : '请稍候，正在展开全国图谱' }}</span>
+        <span class="intro-hint">{{ isReady ? '点击中心按钮继续' : '可以立即进入，系统会在后台继续准备图谱' }}</span>
       </footer>
     </section>
   </Transition>
@@ -203,6 +201,7 @@ onBeforeUnmount(() => {
 .typing-cursor { width: 1px; height: 14px; margin-left: 7px; background: var(--intro-gold); animation: intro-blink 1s steps(2) infinite; }
 .intro-enter { position: absolute; z-index: 3; right: clamp(24px, 9vw, 130px); bottom: 11%; display: inline-flex; align-items: center; gap: 12px; padding: 13px 16px; min-width: 170px; border: 1px solid rgba(124, 200, 187, .22); color: rgba(207, 224, 218, .35); background: rgba(8, 28, 35, .5); text-align: left; cursor: default; transition: border-color .35s ease, color .35s ease, background .35s ease, transform .35s ease; }
 .intro-enter.ready { color: var(--intro-ink); border-color: rgba(124, 200, 187, .76); background: rgba(27, 79, 79, .42); cursor: pointer; animation: intro-cta 2.4s ease-in-out infinite; }
+.intro-enter.loading { border-color: rgba(211, 166, 108, .52); background: rgba(42, 66, 64, .42); }
 .intro-enter.ready:hover { transform: translateY(-3px); border-color: var(--intro-gold); background: rgba(42, 104, 98, .55); }
 .intro-enter:disabled { opacity: .82; }
 .intro-enter-icon { display: grid; place-items: center; width: 27px; height: 27px; color: var(--intro-gold); border: 1px solid currentColor; border-radius: 50%; }

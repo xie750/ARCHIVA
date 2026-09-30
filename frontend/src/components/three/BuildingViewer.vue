@@ -54,19 +54,48 @@ type CachedFrame = {
 const frameCache = ref<CachedFrame[]>([])
 let visibilityObserver: IntersectionObserver | undefined
 
+function platformCleanEmbedUrl(rawUrl?: string) {
+  const url = rawUrl?.trim()
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('sketchfab.com')) {
+      const hiddenUiParams: Record<string, string> = {
+        ui_infos: '0',
+        ui_controls: '0',
+        ui_watermark: '0',
+        ui_watermark_link: '0',
+        ui_settings: '0',
+        ui_help: '0',
+        ui_vr: '0',
+        ui_ar: '0',
+        ui_fullscreen: '0',
+        ui_inspector: '0',
+        ui_annotations: '0',
+        ui_stop: '0',
+        dnt: '1',
+      }
+      for (const [key, value] of Object.entries(hiddenUiParams)) parsed.searchParams.set(key, value)
+    }
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
 // Only an explicitly reviewed URL may create an iframe. Do not use a
 // category-level or global fallback: that is how one building can accidentally
 // show another site's model.
-const externalEmbed = computed(() => props.embedUrl?.trim() || '')
+const externalEmbed = computed(() => platformCleanEmbedUrl(props.embedUrl))
 const localAsset = computed(() => props.assetUrl?.trim() || '')
 const shouldUseLocal = computed(() => Boolean(localAsset.value) && (!externalEmbed.value || embedError.value))
-const shouldRenderEmbed = computed(() => isNearViewport.value && Boolean(externalEmbed.value) && !shouldUseLocal.value)
+const shouldRenderEmbed = computed(() => Boolean(externalEmbed.value) && !shouldUseLocal.value)
 const shouldRenderLocal = computed(() => isNearViewport.value && shouldUseLocal.value)
 const pending3d = computed(() => !externalEmbed.value && !localAsset.value)
 const displayTitle = computed(() => props.title?.trim() || '建筑模型')
 const providerLabel = computed(() => {
   switch (props.modelProvider) {
-    case 'sketchfab': return 'Sketchfab'
+    case 'sketchfab': return '外部 3D 内容源'
     case 'local-glb': return '项目专属 3D 模型'
     case 'model-viewer': return '外部 Model Viewer'
     case 'cesium': return 'Cesium 外部服务'
@@ -113,7 +142,7 @@ const modelLabel = computed(() => props.variant === 'guangxi-chengyang-wind-rain
 }[props.kind]))
 const displayLabel = computed(() => displayTitle.value + ' · ' + modelLabel.value)
 const sourceHref = computed(() => props.assetSourceUrl?.trim() || externalEmbed.value || props.candidateUrl?.trim() || '')
-const sourceLabel = computed(() => props.assetCredit?.trim() || (props.candidateUrl ? '打开第三方候选搜索' : providerLabel.value + ' 模型来源'))
+const sourceLabel = computed(() => props.candidateUrl ? '打开候选模型搜索' : '查看模型来源')
 const viewerState = computed(() => {
   if (pending3d.value) return '暂无该建筑对应的第三方模型'
   if (shouldUseLocal.value && localError.value) return '项目专属模型暂时不可用'
@@ -379,6 +408,9 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
         @load="handleFrameLoad(frame.url)"
         @error="handleFrameError(frame.url)"
       />
+      <span class="external-ui-mask external-ui-mask-logo" aria-hidden="true" />
+      <span class="external-ui-mask external-ui-mask-actions" aria-hidden="true" />
+      <span class="external-ui-mask external-ui-mask-toolbar" aria-hidden="true" />
     </div>
     <div v-else-if="shouldRenderLocal" ref="localStage" class="local-model-stage" aria-live="polite">
       <div ref="localWebglHost" class="local-webgl-host" aria-hidden="true" />
@@ -516,6 +548,40 @@ watch([localAsset, shouldRenderLocal], async ([url, active]) => {
   border: 0;
   background: #0b171d;
   contain: strict;
+}
+
+.external-ui-mask {
+  position: absolute;
+  z-index: 3;
+  pointer-events: auto;
+  background:
+    linear-gradient(180deg, rgba(7, 21, 27, .72), rgba(7, 21, 27, .52)),
+    radial-gradient(circle at 50% 30%, rgba(118, 184, 205, .34), transparent 70%);
+  backdrop-filter: blur(14px) saturate(.85);
+}
+
+.external-ui-mask-logo {
+  top: 10px;
+  left: 10px;
+  width: 110px;
+  height: 58px;
+  border-radius: 0 0 8px 0;
+}
+
+.external-ui-mask-actions {
+  top: 10px;
+  right: 10px;
+  width: 104px;
+  height: 50px;
+  border-radius: 999px;
+}
+
+.external-ui-mask-toolbar {
+  right: 20px;
+  bottom: 18px;
+  width: min(320px, 68%);
+  height: 58px;
+  border-radius: 999px;
 }
 
 .external-pending {

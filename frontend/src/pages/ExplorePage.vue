@@ -15,6 +15,16 @@ const mapBounds = computed(() => {
   return { minLong: Math.min(...longs, 108), maxLong: Math.max(...longs, 120), minLat: Math.min(...lats, 30), maxLat: Math.max(...lats, 40) }
 })
 const mapCities = computed(() => Array.from(new Set(explore.filteredBuildings.map((building) => building.location.split(' · ')[0]))).slice(0, 5).join(' · '))
+const activeCriteria = computed(() => [
+  explore.query.trim() ? `关键词：${explore.query.trim()}` : '',
+  explore.activeRegion !== '全部' ? explore.activeRegion : '',
+  explore.activeCity !== '全部' ? explore.activeCity : '',
+  explore.activeCategory !== '全部' ? explore.activeCategory : '',
+].filter(Boolean))
+const resultSummary = computed(() => {
+  if (!activeCriteria.value.length) return '当前展示全国样例库，可通过搜索或筛选缩小范围。'
+  return `已根据 ${activeCriteria.value.join(' · ')} 更新建筑列表。`
+})
 const imageStatusLabel = (hasImage: boolean) => hasImage ? '公开影像' : '影像待核验'
 const modelStatusLabel = (provider?: string) => provider && provider !== 'pending' ? '3D 可浏览' : '3D 排队中'
 </script>
@@ -23,8 +33,12 @@ const modelStatusLabel = (provider?: string) => provider && provider !== 'pendin
   <div class="container">
     <section class="explore-header"><span class="eyebrow">FIELD GUIDE / NATIONAL ATLAS</span><h1>建筑探索</h1><p>从省份、城市、年代和建筑类型进入中国建筑的空间档案。当前为全国样例库，后续可继续接入真实景区、馆藏和模型数据。</p></section>
     <div class="explore-tools"><label class="search-box"><Search :size="17" aria-hidden="true" /><input v-model="explore.query" aria-label="搜索建筑、城市或关键词" placeholder="搜索建筑、城市或关键词" /></label><ExploreFilters /></div>
-    <div class="map-panel"><div class="map-copy"><span class="eyebrow">GEOGRAPHY / NATIONAL SAMPLE</span><strong>全国建筑样例<br>正在形成可游览图谱</strong><span>{{ mapCities }}</span></div><div class="map-shape"><i v-for="building in explore.filteredBuildings" :key="building.id" class="map-dot" :style="{ left: `${((building.coordinates[0] - mapBounds.minLong) / Math.max(1, mapBounds.maxLong - mapBounds.minLong)) * 330 + 8}px`, top: `${((mapBounds.maxLat - building.coordinates[1]) / Math.max(1, mapBounds.maxLat - mapBounds.minLat)) * 170 + 15}px` }" :title="building.name" /></div><div class="map-legend"><span><i class="legend-dot" /> 已收录建筑</span><span>全国样例库 · 持续接入</span></div></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 18px;color:#968b7e;font-size:11px"><span>{{ explore.filteredBuildings.length }} 座建筑样本</span><span style="display:flex;align-items:center;gap:5px"><MapPin :size="13" /> 全国建筑图谱</span></div>
+    <div class="result-strip" aria-live="polite">
+      <span>{{ resultSummary }}</span>
+      <strong>{{ explore.filteredBuildings.length }} 座建筑样本</strong>
+    </div>
+    <div class="map-panel"><div class="map-copy"><span class="eyebrow">GEOGRAPHY / NATIONAL SAMPLE</span><strong>全国建筑样例<br>正在形成可游览图谱</strong><span>{{ mapCities || '暂无匹配城市' }}</span></div><div class="map-shape"><i v-for="building in explore.filteredBuildings" :key="building.id" class="map-dot" :style="{ left: `${((building.coordinates[0] - mapBounds.minLong) / Math.max(1, mapBounds.maxLong - mapBounds.minLong)) * 330 + 8}px`, top: `${((mapBounds.maxLat - building.coordinates[1]) / Math.max(1, mapBounds.maxLat - mapBounds.minLat)) * 170 + 15}px` }" :title="building.name" /></div><div class="map-legend"><span><i class="legend-dot" /> 已收录建筑</span><span>全国样例库 · 持续接入</span></div></div>
+    <div class="list-toolbar"><span>{{ explore.filteredBuildings.length }} 座建筑样本</span><span><MapPin :size="13" /> 全国建筑图谱</span></div>
     <div class="building-grid">
       <RouterLink v-for="building in explore.filteredBuildings" :key="building.id" :to="`/buildings/${building.id}`" class="building-card">
         <div class="building-cover" :class="[building.coverClass, building.id]" role="img" :aria-label="building.image?.alt ?? `${building.name} 建筑资料图`">
@@ -50,8 +64,14 @@ const modelStatusLabel = (provider?: string) => provider && provider !== 'pendin
 <style scoped>
 .explore-tools { align-items: center; }
 .search-box input { min-width: 0; width: 100%; }
+.result-strip { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: -10px 0 22px; padding: 12px 14px; border: 1px solid rgba(20, 43, 54, .12); background: color-mix(in srgb, var(--jade) 6%, var(--paper)); color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
+.result-strip strong { color: var(--ink); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.list-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 18px; color: #968b7e; font-size: 11px; }
+.list-toolbar span:last-child { display: inline-flex; align-items: center; gap: 5px; }
 @media (max-width: 640px) {
   .explore-tools { gap: 16px; }
   .search-box { flex-basis: 100%; min-width: 0; max-width: none; }
+  .result-strip { display: grid; gap: 5px; }
+  .result-strip strong { white-space: normal; }
 }
 </style>

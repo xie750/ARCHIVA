@@ -40,41 +40,6 @@ const pendingAsset = (label: string): Building3DAsset => {
   }
 }
 
-const localProjectAsset = (
-  id: string,
-  label: string,
-  options: Pick<Building3DAsset, 'version' | 'precision' | 'credit' | 'license' | 'notes'>,
-  file = 'model-medium.glb',
-): Building3DAsset => ({
-  provider: 'local-glb',
-  status: 'published',
-  version: options.version,
-  precision: options.precision,
-  assetUrl: `/models/${id}/${file}`,
-  manifestUrl: `/models/${id}/manifest.json`,
-  sourceUrl: `/models/${id}/${file}`,
-  credit: options.credit ?? 'ARCHIVA 项目自建形制复原模型',
-  license: options.license ?? '项目展示模型；不可据此主张现场测绘精度',
-  notes: options.notes ?? `${label} 已接入项目本地 GLB，可在详情页直接交互浏览。`,
-})
-
-export const catalogGeneratedAsset = (
-  id: string,
-  label: string,
-  kind?: Building['model']['kind'],
-): Building3DAsset => ({
-  provider: 'local-glb',
-  status: 'published',
-  version: 'project-catalog-generated-0.1',
-  precision: `${kind ? `${kind} · ` : ''}项目自动生成形制 GLB`,
-  assetUrl: `/models/catalog-generated/${id}/model-medium.glb`,
-  manifestUrl: `/models/catalog-generated/${id}/manifest.json`,
-  sourceUrl: `/models/catalog-generated/${id}/model-medium.glb`,
-  credit: 'ARCHIVA 项目自动生成形制模型',
-  license: '项目展示模型；正式出版需替换为授权扫描、摄影测量或精修模型',
-  notes: `${label} 已接入项目本地 3D 形制模型；用于补齐交互浏览入口，非现场测绘。`,
-})
-
 /**
  * Keep every catalog entry explicit even while its dedicated external model
  * is being curated. The label is used for the platform search link and keeps
@@ -115,25 +80,18 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     license: '平台嵌入展示；下载与出版需另行授权',
     notes: '龙门石窟第三方公开模型，作为外部平台预览入口；不声明为官方实测资产。',
   },
-  'kaifeng-iron-pagoda': localProjectAsset('kaifeng-iron-pagoda', '开封铁塔', {
-    version: 'project-kaifeng-pagoda-0.9',
-    precision: '项目自建资料复原 GLB · LOD low/medium/high',
-    credit: 'ARCHIVA 项目自建开封铁塔形制复原模型',
-    license: '项目展示模型；正式出版需替换或补充已授权实测资产',
-    notes: '基于公开形制资料与比例参数制作，重点表达十三层楼阁式塔身、逐层收分和褐色琉璃砖质感。',
-  }),
+  'kaifeng-iron-pagoda': pendingAsset('开封铁塔'),
   'beijing-forbidden-city': {
-    provider: 'local-glb',
-    status: 'published',
-    version: 'project-forbidden-city-0.3',
-    precision: '项目自建形制复原 GLB · 中轴院落与宫殿群样板',
-    assetUrl: '/models/beijing-forbidden-city/model-medium.glb',
-    manifestUrl: '/models/beijing-forbidden-city/manifest.json',
-    sourceUrl: '/models/beijing-forbidden-city/model-medium.glb',
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-9822899',
+    precision: '第三方 Sketchfab 模型嵌入 · 紫禁城中轴院落',
+    embedUrl: sketchfabEmbed('9822899391ae4bb2b50f150abfc68c78'),
+    sourceUrl: 'https://sketchfab.com/3d-models/the-forbidden-city-in-beijing-9822899391ae4bb2b50f150abfc68c78',
     candidateUrl: 'https://sketchfab.com/3d-models/the-forbidden-city-in-beijing-9822899391ae4bb2b50f150abfc68c78',
-    credit: 'ARCHIVA 项目自建故宫形制复原模型',
-    license: '项目展示模型；不可据此主张现场测绘精度',
-    notes: '第三方公开模型出现破面和贴图拉伸后，改用项目自建形制复原样板，重点表达红墙、黄瓦、中轴院落、午门、太和殿和角楼关系。',
+    credit: 'Sketchfab 原平台公开模型',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '按外部平台优先策略恢复为 Sketchfab 嵌入展示；本地形制复原模型不再作为默认展示。',
   },
   'beijing-temple-of-heaven': {
     provider: 'sketchfab',
@@ -146,13 +104,7 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
     notes: '模型标题明确对应 The Temple of Heaven in Beijing / 北京天坛祈年殿；优先于项目自动生成兜底模型。',
   },
-  'shanhaiguan-first-pass': localProjectAsset('shanhaiguan-town-east', '山海关天下第一关', {
-    version: 'project-shanhaiguan-gate-0.2',
-    precision: '项目自建关城形制复原 GLB · 镇东楼与城墙样板',
-    credit: 'ARCHIVA 项目自建山海关镇东楼形制复原模型',
-    license: '项目展示模型；正式出版需替换或补充已授权实测资产',
-    notes: '已接入本地镇东楼模型，展示城台、城楼、三道关门和东侧城墙垛口关系。',
-  }),
+  'shanhaiguan-first-pass': pendingAsset('山海关天下第一关'),
   'tibet-potala-palace': {
     provider: 'sketchfab',
     status: 'matched',
@@ -209,14 +161,16 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     notes: '模型标题明确对应广州陈家祠；仅用于该建筑条目。',
   },
   'wuhan-yellow-crane-tower': {
-    ...localProjectAsset('wuhan-yellow-crane-tower', '黄鹤楼', {
-      version: 'project-yellow-crane-tower-0.3',
-      precision: '项目自建资料复原 GLB · LOD low/medium/high',
-      credit: 'ARCHIVA 项目自建黄鹤楼形制复原模型',
-      license: '项目展示模型；正式出版如需实测精度，应替换为已授权扫描或摄影测量资产',
-      notes: '本地模型重点表达五层主楼、黄瓦重檐、红柱廊、观江层台和长江方向语境。',
-    }),
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-8d56b5d',
+    precision: '第三方 Sketchfab 模型嵌入 · 黄鹤楼外部平台模型',
+    embedUrl: sketchfabEmbed('8d56b5d7f23246be91da35b7a33328fe'),
+    sourceUrl: 'https://sketchfab.com/models/8d56b5d7f23246be91da35b7a33328fe',
     candidateUrl: 'https://sketchfab.com/models/8d56b5d7f23246be91da35b7a33328fe',
+    credit: 'Sketchfab 原平台公开模型',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '按外部平台优先策略使用 Sketchfab 嵌入展示，避免默认加载项目自建复原模型。',
   },
   'shanghai-oriental-pearl-tower': {
     provider: 'sketchfab',
@@ -252,14 +206,16 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     notes: '平台模型名称为 Yueyang Tower，先作为岳阳楼外部交互预览。',
   },
   'yingxian-wooden-pagoda': {
-    ...localProjectAsset('yingxian-wooden-pagoda', '应县木塔', {
-      version: 'project-yingxian-pagoda-0.2',
-      precision: '项目自建资料复原 GLB · LOD low/medium/high',
-      credit: 'ARCHIVA 项目自建应县木塔形制复原模型',
-      license: '项目展示模型；正式出版需替换或补充已授权实测资产',
-      notes: '本地模型重点表达五层木构塔身、逐层收分、中心塔心柱和檐口斗拱节奏。',
-    }),
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-5557386',
+    precision: '第三方 Sketchfab 模型嵌入 · 应县木塔外部平台模型',
+    embedUrl: sketchfabEmbed('555738658d654e679dfbc67d2dc03431'),
+    sourceUrl: 'https://sketchfab.com/models/555738658d654e679dfbc67d2dc03431',
     candidateUrl: 'https://sketchfab.com/models/555738658d654e679dfbc67d2dc03431',
+    credit: 'Sketchfab 原平台公开模型',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '按外部平台优先策略使用 Sketchfab 嵌入展示，避免默认加载项目自建复原模型。',
   },
   'hebei-zhaozhou-bridge': {
     provider: 'sketchfab',
@@ -295,14 +251,16 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     notes: '模型标题和说明明确对应 Taipei 101；优先于项目自动生成兜底模型。',
   },
   'xian-big-wild-goose-pagoda': {
-    ...localProjectAsset('xian-big-wild-goose-pagoda', '大雁塔', {
-      version: 'project-big-wild-goose-pagoda-0.2',
-      precision: '项目自建资料复原 GLB · LOD low/medium/high',
-      credit: 'ARCHIVA 项目自建大雁塔形制复原模型',
-      license: '项目展示模型；正式出版需替换或补充已授权实测资产',
-      notes: '本地模型重点表达唐代砖塔七层层级、逐层收分、券门和仿木构檐口。',
-    }),
+    provider: 'sketchfab',
+    status: 'matched',
+    version: 'sketchfab-0f669b9',
+    precision: '第三方 Sketchfab 模型嵌入 · 大雁塔外部平台模型',
+    embedUrl: sketchfabEmbed('0f669b923c7c4ec98a699ff9342f017d'),
+    sourceUrl: 'https://sketchfab.com/models/0f669b923c7c4ec98a699ff9342f017d',
     candidateUrl: 'https://sketchfab.com/models/0f669b923c7c4ec98a699ff9342f017d',
+    credit: 'Sketchfab 原平台公开模型',
+    license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
+    notes: '按外部平台优先策略使用 Sketchfab 嵌入展示，避免默认加载项目自建复原模型。',
   },
   'heilongjiang-saint-sophia': {
     provider: 'sketchfab',
@@ -370,17 +328,7 @@ export const building3dAssets: Record<string, Building3DAsset> = {
     license: '以 Sketchfab 原页面为准；正式出版需另行核验授权',
     notes: '模型标题明确包含洪崖洞；仅用于重庆洪崖洞吊脚楼街区条目。',
   },
-  'guangxi-chengyang-wind-rain-bridge': {
-    provider: 'local-glb',
-    status: 'published',
-    version: 'project-chengyang-bridge-1.0',
-    precision: '项目专属形制模型 · 程阳风雨桥木构廊桥',
-    assetUrl: '/models/chengyang-wind-rain-bridge/model-high.glb',
-    sourceUrl: '/models/chengyang-wind-rain-bridge/model-high.glb',
-    credit: 'Architecture Atlas 项目专属模型',
-    license: '项目展示模型；不可据此主张现场测绘精度',
-    notes: '公开第三方平台未找到程阳风雨桥专属模型，已按程阳永济桥的木构廊桥、桥亭和石墩形制制作独立展示模型；不会加载其他建筑。',
-  },
+  'guangxi-chengyang-wind-rain-bridge': pendingAsset('广西程阳风雨桥'),
 }
 
 for (const [id, label] of Object.entries(pendingExternalModels)) {
@@ -390,10 +338,7 @@ for (const [id, label] of Object.entries(pendingExternalModels)) {
 export function resolveModelMetadata(id: string, model: Building['model']): Building['model'] {
   // Unknown IDs remain honest. A search link is useful for curation, but a
   // search result must never be promoted to an iframe for a different site.
-  const curatedAsset = building3dAssets[id] ?? pendingAsset(id.replace(/[-_]+/g, ' '))
-  const asset = curatedAsset.provider === 'pending'
-    ? catalogGeneratedAsset(id, id.replace(/[-_]+/g, ' '), model.kind)
-    : curatedAsset
+  const asset = building3dAssets[id] ?? pendingAsset(id.replace(/[-_]+/g, ' '))
   const usesLocalAsset = asset.provider === 'local-glb'
   return {
     ...model,

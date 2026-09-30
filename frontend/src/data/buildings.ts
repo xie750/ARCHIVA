@@ -1,6 +1,6 @@
 import type { Building, ScenicPoint } from '../types/building'
 import { nationalSeedBuildings } from './nationalSeed'
-import { building3dAssets, catalogGeneratedAsset, modelCandidateUrl, resolveModelMetadata } from './building3dAssets'
+import { building3dAssets, modelCandidateUrl, resolveModelMetadata } from './building3dAssets'
 
 const commonsImage = (file: string, width = 1600) =>
   `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`
@@ -427,9 +427,7 @@ function resolveScenicPoint(point: ScenicPoint, parentModel: Building['model']):
       embedSource: parentModel.source ?? point.embedSource,
     }
   }
-  const curatedAsset = building3dAssets[point.id]
-  const shouldUseGenerated = !point.useParentModel && !point.embedUrl && (!curatedAsset || curatedAsset.provider === 'pending')
-  const asset = shouldUseGenerated ? catalogGeneratedAsset(point.id, point.name, point.modelKind) : curatedAsset
+  const asset = building3dAssets[point.id]
   if (!asset) {
     return {
       ...point,
